@@ -29,7 +29,7 @@ class WrfFile : public NcFile, public GeoRaster
 
     const double getDx () const;
     const double getDy () const;
-    void write0Dto2D (const std::string, const size_t, const size_t, const double*);
+    void write0Dto2D (const std::string&, const size_t&, const size_t&, const double&);
     void write3D (const std::string, const float*, const size_t);
     void read2D (const std::string, float*);
 
@@ -51,10 +51,10 @@ class WrfFile : public NcFile, public GeoRaster
     void lock ();
     void unlock ();
 #endif
-    void writeWaterFraction (const size_t, const size_t, const double*);
-    void writeUrbanFraction (const size_t, const size_t, const double*);
-    void writeGlacierFraction (const size_t, const size_t, const double*);
-    void writeWetlandFraction (const size_t, const size_t, const double*);
+    void writeWaterFraction (const size_t&, const size_t&, const double&);
+    void writeUrbanFraction (const size_t&, const size_t&, const double&);
+    void writeGlacierFraction (const size_t&, const size_t&, const double&);
+    void writeWetlandFraction (const size_t&, const size_t&, const double&);
 };
 
 class VariableNotExistExeption {};

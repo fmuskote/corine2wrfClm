@@ -27,12 +27,15 @@ void doTheWork  (const string, const string);
 
 static int verbosity = 0;
 
-int main (int argc, char ** argv) {
+int main (int argc, char ** argv)
+{
     string wrfFileName ("wrfinput_d01");
-    string corineFileName ("g100_06.tif");
+    string corineFileDirectory (".");
 
-    while (true) {
-        static struct option long_options[] = {
+    while (true)
+    {
+        static struct option long_options[] =
+        {
             {"help",       no_argument,       0, 'h'},
             {"verbose",    no_argument,       0, 'v'},
             {"version",    no_argument,       0, 'V'},
@@ -45,7 +48,8 @@ int main (int argc, char ** argv) {
         int c = getopt_long (argc, argv, "hvVc:w:", long_options, &option_index);
         if (c == -1) break;
 
-        switch (c) {
+        switch (c)
+        {
             case 0:
                 if (long_options[option_index].flag != 0)
                     break;
@@ -64,7 +68,7 @@ int main (int argc, char ** argv) {
                 cout << PACKAGE_STRING << endl;
                 return EXIT_SUCCESS;
             case 'c':
-                corineFileName = string (optarg);
+                corineFileDirectory = string (optarg);
                 break;
             case 'w':
                 wrfFileName = string (optarg);
@@ -76,17 +80,19 @@ int main (int argc, char ** argv) {
         }
     }
 
-    if (verbosity > 0) {
-        cout << "corineFileName = '" << corineFileName << "'" << endl;
-        cout << "wrfFileName =    '" << wrfFileName << "'" << endl;
+    if (verbosity > 0)
+    {
+        cout << "corineFileDirectory = '" << corineFileDirectory << "'" << endl;
+        cout << "wrfFileName =         '" << wrfFileName << "'" << endl;
     }
 
-    doTheWork (corineFileName, wrfFileName);
+    doTheWork (corineFileDirectory, wrfFileName);
 
     return EXIT_SUCCESS;
 }
 
-void doTheWork (const string corineFileName, const string wrfFileName) {
+void doTheWork (const string corineFileDirectory, const string wrfFileName)
+{
     // Open WRF file //
     //---------------//
     WrfFile wrf (wrfFileName, WrfFile::Write);
@@ -101,25 +107,26 @@ void doTheWork (const string corineFileName, const string wrfFileName) {
     OGRRegisterAll();
 
 #ifdef DEBUG
-    for (size_t type = 1; type < 2; type++)
+    for (size_t type = 0; type < 1; ++type)
 #else
-    for (size_t type = 1; type < corine::typeCount; type++)
+    for (size_t type = 0; type < corine::typeCount; ++type)
 #endif
     {
-        string fileName = corine::getFileName (corineFileName, type);
+        string fileName = corine::getFileName (corineFileDirectory, type);
         if (verbosity > 0) cout << "working on corine file " << fileName << endl;
 
 #ifdef DEBUG2
-        for (size_t i = 0; i < 1; i++)
+        for (size_t i = 0; i < 1; ++i)
 #else
 #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < wrf.iSize (); i++)
+        for (size_t i = 0; i < wrf.iSize (); ++i)
 #endif
         {
             OGRDataSource* dataSource = OGRSFDriverRegistrar::Open (fileName.c_str (), FALSE);
 
             OGRLayer* layer = dataSource->GetLayer (0);
-            if (layer->GetFeatureCount () > 0) {
+            if (layer->GetFeatureCount () > 0)
+            {
                 OGRSpatialReference* corineCoordSys = layer->GetSpatialRef ();
                 OGRCoordinateTransformation* trafoCorine2Wrf =
                     OGRCreateCoordinateTransformation (corineCoordSys, wrfCoordSys);
@@ -127,9 +134,9 @@ void doTheWork (const string corineFileName, const string wrfFileName) {
                     OGRCreateCoordinateTransformation (wrfCoordSys, corineCoordSys);
 
 #ifdef DEBUG2
-                for (size_t j = 0; j < 1; j++)
+                for (size_t j = 0; j < 1; ++j)
 #else
-                for (size_t j = 0; j < wrf.jSize (); j++)
+                for (size_t j = 0; j < wrf.jSize (); ++j)
 #endif
                 {
                     OGRGeometry* wrfPolygon = wrf.getPolygon2 (i, j);
@@ -139,22 +146,24 @@ void doTheWork (const string corineFileName, const string wrfFileName) {
                         wrfPolygon->clone ();
                     wrfPolygonInCorineCoord->transform (trafoWrf2Corine);
                     layer->SetSpatialFilter (wrfPolygonInCorineCoord);
-                    if (layer->GetFeatureCount () > 0) {
+                    if (layer->GetFeatureCount () > 0)
+                    {
 
                         layer->ResetReading ();
                         OGRFeature* feature;
-                        while ((feature = layer->GetNextFeature ())) {
+                        while ((feature = layer->GetNextFeature ()))
+                        {
                             OGRGeometry* corinePolygon = feature->GetGeometryRef ();
                             corinePolygon->transform (trafoCorine2Wrf);
 
-                            if (corinePolygon->Intersects (wrfPolygon)) {
+                            if (corinePolygon->Intersects (wrfPolygon))
+                            {
                                 OGRGeometry* intersection =
                                     corinePolygon->Intersection (wrfPolygon);
                                 double intersectionArea =
                                     ((OGRPolygon*)intersection)->get_Area ();
 
                                 fractions[i][j].add (type, intersectionArea/wrfArea);
-                                //fractions[i][j][type] += intersectionArea/wrfArea;
 
                                 OGRGeometryFactory::destroyGeometry (intersection);
                             }
@@ -175,63 +184,58 @@ void doTheWork (const string corineFileName, const string wrfFileName) {
 
 #ifndef NOOUTPUT
 #ifdef DEBUG3
-    for (size_t i = 0; i < 1; i++)
-        for (size_t j = 0; j < 1; j++)
+    for (size_t i = 11; i < 12; ++i)
+        for (size_t j = 15; j < 16; ++j)
 #else
 #pragma omp parallel for
-    for (size_t i = 0; i < wrf.iSize (); i++)
-        for (size_t j = 0; j < wrf.jSize (); j++)
+    for (size_t i = 0; i < wrf.iSize (); ++i)
+        for (size_t j = 0; j < wrf.jSize (); ++j)
 #endif
         {
-            cout << "corine fractions:" << endl;
-            cout << fractions[i][j] << endl;
 
+            // map the corine fractions to CLM fractions
+            // -----------------------------------------
             clm::ClmFractions clmFractions = fractions[i][j].map2Clm ();
-            
-            cout << "clm fractions:" << endl;
-            cout << clmFractions << endl;
 
-            double missing = clmFractions[clm::missing];
-            if (missing > 1.0e-33) {
+            // if missing is too large, fill with default values from the
+            // original WRF file mapped to CLM types
+            // ----------------------------------------------------------
+            double missing = clmFractions.missing ();
+            if (missing > 1.0e-5)
+            {
 
                 if (verbosity > 1)
                     cerr << "WARNING: using partly original land use in grid cell "
                          << i << " " << j << " with missing fraction of " << 
                          missing << endl;
 
-                clm::ClmFractions originalLandUseFractions = wrf.getLandUseFraction (i, j)->map2Clm ();
-
-                cout << "original fractions:" << endl;
-                cout << originalLandUseFractions << endl;
+                clm::ClmFractions originalLandUseFractions
+                    = wrf.getLandUseFraction (i, j)->map2Clm ();
 
                 for (size_t type = 0; type < clm::typeCount; ++type)
                     clmFractions.set (type, originalLandUseFractions[type]*missing);
-
-                cout << "clm fractions:" << endl;
-                cout << clmFractions << endl;
-
+                            
             }
 
+#ifdef CHECK
             try
             {
                 clmFractions.check ();
             }
             catch (std::exception& e)
             {
-                cout << clmFractions;
+                cout << clmFractions << endl;
                 throw e;
             }
-
-            double fractionWater = fractions[i][j].getWaterFraction ();
-            double fractionUrban = fractions[i][j].getArtificialFraction ();
-            double fractionGlacier = fractions[i][j].getGlacierFraction ();
-            double fractionWetland = fractions[i][j].getWetlandFraction ();
+#endif
             
+            // write result to WRF file
+            // ------------------------
             wrf.writeClmPftTypeFractions (i, j, clmFractions);
-            wrf.writeWaterFraction (i, j, &fractionWater);
-            wrf.writeUrbanFraction (i, j, &fractionUrban);
-            wrf.writeGlacierFraction (i, j, &fractionGlacier);
-            wrf.writeWetlandFraction (i, j, &fractionWetland);
+            wrf.writeWaterFraction (i, j, fractions[i][j].getWaterFraction ());
+            wrf.writeUrbanFraction (i, j, fractions[i][j].getArtificialFraction ());
+            wrf.writeGlacierFraction (i, j, fractions[i][j].getGlacierFraction ());
+            wrf.writeWetlandFraction (i, j, fractions[i][j].getWetlandFraction ());
         }
 #endif
 

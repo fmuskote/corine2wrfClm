@@ -6,7 +6,7 @@ using namespace corine;
 using std::string;
 
 CorineFractions::CorineFractions ()
-    : NotClmFractions (typeCount, missing)
+    : NotClmFractions (typeCount)
 {}
 
 clm::ClmFractions CorineFractions::map2Clm () const
@@ -68,93 +68,93 @@ const string corine::getFileName (const string path, const size_t type)
     result += "/clc06_c";
     switch (type)
     {
-        case  1:
+        case  0:
             result += "111"; break;
-        case  2:
+        case  1:
             result += "112"; break;
-        case  3:
+        case  2:
             result += "121"; break;
-        case  4:
+        case  3:
             result += "122"; break;
-        case  5:
+        case  4:
             result += "123"; break;
-        case  6:
+        case  5:
             result += "124"; break;
-        case  7:
+        case  6:
             result += "131"; break;
-        case  8:
+        case  7:
             result += "132"; break;
-        case  9:
+        case  8:
             result += "133"; break;
-        case 10:
+        case  9:
             result += "141"; break;
-        case 11:
+        case 10:
             result += "142"; break;
-        case 12:
+        case 11:
             result += "211"; break;
-        case 13:
+        case 12:
             result += "212"; break;
-        case 14:
+        case 13:
             result += "213"; break;
-        case 15:
+        case 14:
             result += "221"; break;
-        case 16:
+        case 15:
             result += "222"; break;
-        case 17:
+        case 16:
             result += "223"; break;
-        case 18:
+        case 17:
             result += "231"; break;
-        case 19:
+        case 18:
             result += "241"; break;
-        case 20:
+        case 19:
             result += "242"; break;
-        case 21:
+        case 20:
             result += "243"; break;
-        case 22:
+        case 21:
             result += "244"; break;
-        case 23:
+        case 22:
             result += "311"; break;
-        case 24:
+        case 23:
             result += "312"; break;
-        case 25:
+        case 24:
             result += "313"; break;
-        case 26:
+        case 25:
             result += "321"; break;
-        case 27:
+        case 26:
             result += "322"; break;
-        case 28:
+        case 27:
             result += "323"; break;
-        case 29:
+        case 28:
             result += "324"; break;
-        case 30:
+        case 29:
             result += "331"; break;
-        case 31:
+        case 30:
             result += "332"; break;
-        case 32:
+        case 31:
             result += "333"; break;
-        case 33:
+        case 32:
             result += "334"; break;
-        case 34:
+        case 33:
             result += "335"; break;
-        case 35:
+        case 34:
             result += "411"; break;
-        case 36:
+        case 35:
             result += "412"; break;
-        case 37:
+        case 36:
             result += "421"; break;
-        case 38:
+        case 37:
             result += "422"; break;
-        case 39:
+        case 38:
             result += "423"; break;
-        case 40:
+        case 39:
             result += "511"; break;
-        case 41:
+        case 40:
             result += "512"; break;
-        case 42:
+        case 41:
             result += "521"; break;
-        case 43:
+        case 42:
             result += "522"; break;
-        case 44:
+        case 43:
             result += "523"; break;
     }
     result += ".shp";

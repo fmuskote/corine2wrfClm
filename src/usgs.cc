@@ -4,7 +4,7 @@
 using namespace usgs;
 
 UsgsFractions::UsgsFractions ()
-    : NotClmFractions (typeCount, missing)
+    : NotClmFractions (typeCount)
 {}
 
 clm::ClmFractions UsgsFractions::map2Clm () const
@@ -38,8 +38,8 @@ clm::ClmFractions UsgsFractions::map2Clm () const
     clmFractions.add (clm::broadleafEvergreenShrubTemperate, 0.80*operator[] (shrubland));
 
     clmFractions.add (clm::noPFT,                            0.20*operator[] (mixedShrublandAndGrassland));
-    clmFractions.add (clm::broadleafEvergreenShrubTemperate, 0.50*operator[] (mixedShrublandAndGrassland));
-    clmFractions.add (clm::c4Grass,                          0.50*operator[] (mixedShrublandAndGrassland));
+    clmFractions.add (clm::broadleafEvergreenShrubTemperate, 0.40*operator[] (mixedShrublandAndGrassland));
+    clmFractions.add (clm::c4Grass,                          0.40*operator[] (mixedShrublandAndGrassland));
 
     clmFractions.add (clm::broadleafDeciduousTreeTropical, 0.30*operator[] (savanna));
     clmFractions.add (clm::c4Grass,                        0.70*operator[] (savanna));

@@ -5,7 +5,7 @@
 using namespace modis;
 
 ModisFractions::ModisFractions ()
-    : NotClmFractions (typeCount, missing)
+    : NotClmFractions (typeCount)
 {}
 
 usgs::UsgsFractions ModisFractions::map2Usgs () const

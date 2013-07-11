@@ -1,14 +1,13 @@
 #ifndef MODIS_H
 #define MODIS_H
 
-#include <boost/shared_ptr.hpp>
 #include "notClmFractions.h"
 #include "clm.h"
 #include "usgs.h"
 
 namespace modis {
 
-    const size_t typeCount = 21;
+    const size_t typeCount = 20;
 
     enum Type {
         evergreenNeedleleafForest          =  0,
@@ -30,8 +29,7 @@ namespace modis {
         water                              = 16,
         woodedTundra                       = 17,
         mixedTundra                        = 18,
-        barrenTundra                       = 19,
-        missing                            = 20
+        barrenTundra                       = 19
     };
 
     class ModisFractions : public NotClmFractions

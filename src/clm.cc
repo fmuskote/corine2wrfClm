@@ -2,6 +2,6 @@
 using namespace clm;
 
 ClmFractions::ClmFractions ()
-    : Fractions (typeCount, missing)
+    : Fractions (typeCount)
 {}
 

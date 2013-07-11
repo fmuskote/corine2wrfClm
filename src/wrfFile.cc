@@ -194,8 +194,8 @@ bool WrfFile::isModisLUType () const {
     if (landCatDim == NULL) throw UnknownLUTypeException ();
     bool result = false;
     if (    strcmp (luType, "MODIFIED_IGBP_MODIS_NOAH") == 0
-        and landCatDim->size () == modis::typeCount - 1
-        and get_att ("NUM_LAND_CAT")->as_int (0) == modis::typeCount - 1)
+        and landCatDim->size () == (long) modis::typeCount
+        and get_att ("NUM_LAND_CAT")->as_int (0) == (long) modis::typeCount)
         result = true;
 
     delete[] luType;
@@ -207,8 +207,8 @@ bool WrfFile::isUsgsLUType () const {
     if (landCatDim == NULL) throw UnknownLUTypeException ();
     bool result = false;
     if (    strcmp (luType, "USGS") == 0
-        and landCatDim->size () == usgs::typeCount - 1
-        and get_att ("NUM_LAND_CAT")->as_int (0) == usgs::typeCount - 1)
+        and landCatDim->size () == (long) usgs::typeCount
+        and get_att ("NUM_LAND_CAT")->as_int (0) == (long) usgs::typeCount)
         result = true;
 
     delete[] luType;
@@ -328,19 +328,19 @@ void WrfFile::unlock () {
 }
 #endif
 
-void WrfFile::writeWaterFraction (const size_t i, const size_t j, const double* fraction) {
+void WrfFile::writeWaterFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("waterFraction", i, j, fraction);
 }
-void WrfFile::writeUrbanFraction (const size_t i, const size_t j, const double* fraction) {
+void WrfFile::writeUrbanFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("urbanFraction", i, j, fraction);
 }
-void WrfFile::writeGlacierFraction (const size_t i, const size_t j, const double* fraction) {
+void WrfFile::writeGlacierFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("glacierFraction", i, j, fraction);
 }
-void WrfFile::writeWetlandFraction (const size_t i, const size_t j, const double* fraction) {
+void WrfFile::writeWetlandFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("wetlandFraction", i, j, fraction);
 }
-void WrfFile::write0Dto2D (const string varName, const size_t i, const size_t j, const double* value) {
+void WrfFile::write0Dto2D (const string& varName, const size_t& i, const size_t& j, const double& value) {
 #ifdef _OPENMP
         lock ();
 #endif
@@ -375,7 +375,7 @@ void WrfFile::write0Dto2D (const string varName, const size_t i, const size_t j,
     lock ();
 #endif
     variable->set_cur (offset);
-    variable->put (value, counts);
+    variable->put (&value, counts);
 #ifdef _OPENMP
     unlock ();
 #endif

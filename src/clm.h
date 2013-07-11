@@ -6,7 +6,7 @@
 
 namespace clm {
 
-    const size_t typeCount = 18;
+    const size_t typeCount = 17;
 
     enum Type {
         noPFT                            =  0,
@@ -25,8 +25,7 @@ namespace clm {
         c3Grass                          = 13,
         c4Grass                          = 14,
         crop                             = 15,
-        crop2                            = 16,
-        missing                          = 17
+        crop2                            = 16
     };
 
     class ClmFractions : public Fractions

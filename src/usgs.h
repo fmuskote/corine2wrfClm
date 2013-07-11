@@ -6,7 +6,7 @@
 
 namespace usgs {
 
-    const size_t typeCount = 25;
+    const size_t typeCount = 24;
 
     enum Type {
         urbanAndBuildUpLand              =  0,
@@ -32,8 +32,7 @@ namespace usgs {
         woodenTundra                     = 20,
         mixedTundra                      = 21,
         bareGroundTundra                 = 22,
-        snowOrIce                        = 23,
-        missing                          = 24
+        snowOrIce                        = 23
     };
 
     class UsgsFractions : public NotClmFractions
