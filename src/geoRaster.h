@@ -4,6 +4,7 @@
 #include <ogr_spatialref.h>
 #include <ogr_geometry.h>
 #include <string>
+#include <boost/multi_array.hpp>
 #include "coordinate.h"
 #include "clm.h"
 
@@ -31,7 +32,7 @@ class GeoRaster
     OGRSpatialReference* getCoordinateSystem () const;
     void getArrayIndex (const Coordinate, double *, double *) const;
     void writeEmptyGeoTiff (const std::string);
-    virtual float* getClmType (const size_t) = 0;
+    virtual boost::multi_array<float, 2> getClmType (const size_t) = 0;
 };
 
 class OutOfDomainException {};

@@ -115,13 +115,11 @@ void GeoRaster::writeEmptyGeoTiff (const string fileName)
 
     for (size_t type = 0; type < clm::typeCount; type++)
     {
-        float* data = getClmType (type);
+        boost::multi_array<float, 2> data = getClmType (type);
 
         GDALRasterBand* band = dataSet->GetRasterBand(type+1);
         band->RasterIO (GF_Write, 0, 0, iSize (), jSize (),
-                          data, iSize (), jSize (), GDT_Float32, 0, 0);
-
-        delete[] data;
+                          data.data (), iSize (), jSize (), GDT_Float32, 0, 0);
     }
 
     GDALClose ((GDALDatasetH)dataSet);

@@ -144,20 +144,22 @@ void File::writeClmPftTypeFractions (const size_t& i, const size_t& j, const clm
         stream << type;
         string varName = stream.str ();
 
-        // get variable //
-        //--------------//
+        long offset[3] = {0, (long) j, (long) i};
+        long counts[3] = {1, 1, 1};
+
 #ifdef _OPENMP
         lock ();
 #endif
+
         NcVar* variable = get_var (varName.c_str ());
         if (!variable) {
-            const NcDim** dims = new const NcDim*[3];
+            boost::scoped_array<const NcDim*> dims (
+                    new const NcDim*[3]);
             dims[0] = get_dim ("Time");
             dims[1] = get_dim ("south_north");
             dims[2] = get_dim ("west_east");
 
-            variable = add_var (varName.c_str (), ncFloat, 3, dims);
-            delete[] dims;
+            variable = add_var (varName.c_str (), ncFloat, 3, dims.get ());
 
             variable->add_att ("FieldType", 104);
             variable->add_att ("MemoryOrder", "XY");
@@ -167,20 +169,10 @@ void File::writeClmPftTypeFractions (const size_t& i, const size_t& j, const clm
             variable->add_att ("sr_x", "1");
             variable->add_att ("sr_y", "1");
         }
-#ifdef _OPENMP
-        unlock ();
-#endif
 
-        boost::scoped_ptr<double> tmp (new double);
-        *tmp = fractions[type];
-
-        long offset[3] = {0, (long) j, (long) i};
-        long counts[3] = {1, 1, 1};
-#ifdef _OPENMP
-        lock ();
-#endif
         variable->set_cur (offset);
-        variable->put (tmp.get (), counts);
+        variable->put (&fractions[type], counts);
+
 #ifdef _OPENMP
         unlock ();
 #endif
@@ -213,37 +205,19 @@ bool File::isUsgsLUType () const {
     delete[] luType;
     return result;
 }
-float* File::getClmType (const size_t type) {
-    NcVar* variable = get_var ("clm_landuse_fraction");
-    long offset[4] = {0, (long) type, 0, 0};
-    long count[4] = {1, 1, (long) jSize (), (long) iSize ()};
-    float* data = new float[iSize ()*jSize ()];
+boost::multi_array<float, 2> File::getClmType (const size_t type) {
+    boost::array<long, 4> offset = {{0, (long) type, 0, 0}};
+    boost::array<long, 4> count = {{1, 1, (long) jSize (), (long) iSize ()}};
 
-#ifdef _OPENMP
-    lock ();
-#endif
-    variable->set_cur (offset);
-    variable->get (data, count);
-#ifdef _OPENMP
-    unlock ();
-#endif
-
-
-    float* result = new float[iSize ()*jSize ()];
-
-    for (size_t i = 0; i < iSize (); i++)
-        for (size_t j = 0; j < jSize (); j++)
-            result[i+j*iSize ()] = data[i+j*iSize ()];
-
-    delete[] data;
-    return result;
+    boost::multi_array<float, 3> data = read<float, 3> ("clm_landuse_fraction", offset, count);
+    return data[boost::indices[0][boost::multi_array_types::index_range(0, jSize ())][boost::multi_array_types::index_range (0, iSize ())]];
 }
-void File::createMosaic (File* highResFile) {
+void File::createMosaic (File& highResFile) {
 
     float dx = getDx ();
     float dy = getDy ();
-    float dxHigh = highResFile->getDx ();
-    float dyHigh = highResFile->getDy ();
+    float dxHigh = highResFile.getDx ();
+    float dyHigh = highResFile.getDy ();
 
     if (fabs (fmod (dx, dxHigh)) > 0.0005 or fabs (fmod (dy, dyHigh)) > 0.0005)
         throw WrongMosaicGeometryException ();
@@ -254,8 +228,8 @@ void File::createMosaic (File* highResFile) {
     if (dxFac != dyFac)
         throw WrongMosaicGeometryException ();
 
-    if (   iSize ()*dxFac != highResFile->iSize ()
-        or jSize ()*dyFac != highResFile->jSize ())
+    if (   iSize ()*dxFac != highResFile.iSize ()
+        or jSize ()*dyFac != highResFile.jSize ())
         throw WrongMosaicGeometryException ();
 
     size_t mosaicCellCount = dxFac*dyFac;
@@ -274,50 +248,40 @@ void File::createMosaic (File* highResFile) {
         highResVarName.width (2);
         highResVarName << type;
 
-        float* highResData = new float[highResFile->jSize ()*highResFile->iSize ()];
-        highResFile->read2D (highResVarName.str (), highResData);
+        boost::multi_array<float, 2> highResData =
+            highResFile.read<float, 2> (highResVarName.str ());
 
-        float* data = new float[mosaicCellCount*jSize ()*iSize ()];
-        mosaicArray (highResData, highResFile->iSize (), highResFile->jSize (),
-                data, mosaicCellCount, dxFac, dyFac);
+        boost::multi_array<float, 3> data =
+            mosaicArray (highResData, mosaicCellCount, dxFac, dyFac);
 
         stringstream stream;
         stream << "CLM_LANDUSE_FRACTION_MOSAIC_";
         stream.fill ('0');
         stream.width (2);
         stream << type;
-        write3D (stream.str (), data, mosaicCellCount);
+        write (stream.str (), data);
 
-        delete[] data;
-        delete[] highResData;
     }
 
-    float* highResData = new float[highResFile->jSize ()*highResFile->jSize ()];
-    float* data = new float[mosaicCellCount*jSize ()*iSize ()];
+    boost::multi_array<float, 2> highResData;
+    boost::multi_array<float, 3> data;
 
-    highResFile->read2D ("waterFraction", highResData);
-    mosaicArray (highResData, highResFile->iSize (), highResFile->jSize (),
-            data, mosaicCellCount, dxFac, dyFac);
-    write3D ("WATERFRACTION_MOSAIC", data, mosaicCellCount);
+    highResData = highResFile.read<float, 2> ("waterFraction");
+    data = mosaicArray (highResData, mosaicCellCount, dxFac, dyFac);
+    write ("WATERFRACTION_MOSAIC", data);
 
-    highResFile->read2D ("urbanFraction", highResData);
-    mosaicArray (highResData, highResFile->iSize (), highResFile->jSize (),
-            data, mosaicCellCount, dxFac, dyFac);
-    write3D ("URBANFRACTION_MOSAIC", data, mosaicCellCount);
+    highResData = highResFile.read<float, 2> ("urbanFraction");
+    data = mosaicArray (highResData, mosaicCellCount, dxFac, dyFac);
+    write ("URBANFRACTION_MOSAIC", data);
 
-    highResFile->read2D ("glacierFraction", highResData);
-    mosaicArray (highResData, highResFile->iSize (), highResFile->jSize (),
-            data, mosaicCellCount, dxFac, dyFac);
-    write3D ("GLACIERFRACTION_MOSAIC", data, mosaicCellCount);
+    highResData = highResFile.read<float, 2> ("glacierFraction");
+    data = mosaicArray (highResData, mosaicCellCount, dxFac, dyFac);
+    write ("GLACIERFRACTION_MOSAIC", data);
 
-    highResFile->read2D ("wetlandFraction", highResData);
-    mosaicArray (highResData, highResFile->iSize (), highResFile->jSize (),
-            data, mosaicCellCount, dxFac, dyFac);
-    write3D ("WETLANDFRACTION_MOSAIC", data, mosaicCellCount);
+    highResData = highResFile.read<float, 2> ("wetlandFraction");
+    data = mosaicArray (highResData, mosaicCellCount, dxFac, dyFac);
+    write ("WETLANDFRACTION_MOSAIC", data);
 
-    delete[] data;
-    delete[] highResData;
-    
 }
 
 #ifdef _OPENMP
@@ -347,15 +311,15 @@ void File::write0Dto2D (const string& varName, const size_t& i, const size_t& j,
 #endif
     NcVar* variable = get_var (varName.c_str ());
     if (!variable) {
-        const NcDim** dims = new const NcDim*[3];
+        boost::scoped_array<const NcDim*> dims (
+                new const NcDim*[3]);
         dims[0] = get_dim ("Time");
         dims[1] = get_dim ("south_north");
         dims[2] = get_dim ("west_east");
 
-        variable = add_var (varName.c_str (), ncFloat, 3, dims);
+        variable = add_var (varName.c_str (), ncFloat, 3, dims.get ());
         if (!variable)
-            throw VariableNotExistExeption ();
-        delete[] dims;
+            throw VariableNotExistException ();
 
         variable->add_att ("FieldType", 104);
         variable->add_att ("MemoryOrder", "XY");
@@ -381,66 +345,19 @@ void File::write0Dto2D (const string& varName, const size_t& i, const size_t& j,
     unlock ();
 #endif
 }
-void File::write3D (const string varName, const float* data, const size_t zCount) {
-    NcVar* variable = get_var (varName.c_str ());
-    if (!variable)
-        throw VariableNotExistExeption ();
+boost::multi_array<float, 3> File::mosaicArray (
+        const boost::multi_array<float, 2> highResData,
+        const size_t mosaicCellCount, const size_t dxFac, const size_t dyFac) {
 
-    long offset[4] = {0, 0, 0, 0};
-    long count[4] = {1, (long) zCount, (long) jSize (), (long) iSize ()};
-
-#ifdef _OPENMP
-    lock ();
-#endif
-    variable->set_cur (offset);
-    variable->put (data, count);
-#ifdef _OPENMP
-    unlock ();
-#endif
-}
-void File::read2D (const string varName, float* data) {
-    NcVar* variable = get_var (varName.c_str ());
-    if (!variable)
-        throw VariableNotExistExeption ();
-
-    long offset[3] = {0, 0, 0};
-    long count[3] = {1, (long) jSize (), (long) iSize ()};
-
-#ifdef _OPENMP
-    lock ();
-#endif
-    variable->set_cur (offset);
-    variable->get (data, count);
-#ifdef _OPENMP
-    unlock ();
-#endif
-}
-void File::mosaicArray (
-        const float* highResData, const size_t highResISize, const size_t highResJSize,
-        float* data, const size_t mosaicCellCount, const size_t dxFac, const size_t dyFac) {
-
-    const float** highResData2D = new const float*[highResJSize];
-    for (size_t j = 0; j < highResJSize; j++)
-        highResData2D[j] = highResData + j*highResISize;
-
-    float*** data3D = new float**[mosaicCellCount];
-    for (size_t m = 0; m < mosaicCellCount; m++) {
-        data3D[m] = new float*[jSize ()];
-        for (size_t j = 0; j < jSize (); j++)
-            data3D[m][j] = data + (m*jSize () + j)*iSize ();
-    }
+    boost::multi_array<float, 3> result (boost::extents[mosaicCellCount][jSize ()][iSize ()]);
 
     for (size_t i = 0; i < iSize (); i++)
         for (size_t j = 0; j < jSize (); j++)
             for (size_t im = 0; im < dxFac; im++)
                 for (size_t jm = 0; jm < dyFac; jm++) {
                     size_t m = im*dyFac + jm;
-                    data3D[m][j][i] = highResData2D[j*dyFac + jm][i*dxFac + im];
+                    result[m][j][i] = highResData[j*dyFac + jm][i*dxFac + im];
                 }
-        
-    for (size_t m = 0; m < mosaicCellCount; m++)
-        delete[] data3D[m];
-    delete[] data3D;
-    delete[] highResData2D;
+    return result;
 }
     
