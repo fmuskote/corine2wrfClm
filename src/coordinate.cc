@@ -1,6 +1,6 @@
 #include "coordinate.h"
 
-Coordinate::Coordinate (const double x, const double y,
+Coordinate::Coordinate (double x, double y,
         OGRSpatialReference* coordinateSystem)
 {
     _x = x;
@@ -46,7 +46,7 @@ const Coordinate Coordinate::transform (OGRSpatialReference* targetCoordinateSys
     }
 }
 
-ostream& operator<< (ostream& out, const Coordinate coord)
+ostream& operator<< (ostream& out, const Coordinate& coord)
 {
     out << coord.getX () << " " << coord.getY ();
     return out;

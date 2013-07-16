@@ -4,7 +4,7 @@
 
 using std::string;
 
-ShapeFile::ShapeFile (const string fileName)
+ShapeFile::ShapeFile (string fileName)
 {
     OGRRegisterAll();
     if (!(_poDS = OGRSFDriverRegistrar::Open (fileName.c_str (), FALSE)))

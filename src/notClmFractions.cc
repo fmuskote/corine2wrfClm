@@ -1,5 +1,5 @@
 #include "notClmFractions.h"
 
-NotClmFractions::NotClmFractions (const size_t& typeCount)
+NotClmFractions::NotClmFractions (size_t typeCount)
     : Fractions (typeCount)
 {}

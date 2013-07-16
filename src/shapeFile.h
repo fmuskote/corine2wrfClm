@@ -11,7 +11,7 @@ class ShapeFile
     OGRLayer* _layer;
     OGRSpatialReference* _coordinateSystem;
   public:
-    ShapeFile (const std::string);
+    ShapeFile (std::string);
     ~ShapeFile ();
     const int getLayerCount () const;
     const int getFeatureCount () const;

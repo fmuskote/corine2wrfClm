@@ -61,7 +61,7 @@ clm::ClmFractions CorineFractions::map2Clm () const
     return clmFractions;
 }
 
-const string corine::getFileName (const string path, const size_t type)
+string corine::getFileName (string path, size_t type)
 {
     string result ("");
     result += path;

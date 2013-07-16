@@ -141,7 +141,7 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
                 for (size_t j = 0; j < wrf.jSize (); ++j)
 #endif
                 {
-                    OGRGeometry* wrfPolygon = wrf.getPolygon2 (i, j);
+                    OGRGeometry* wrfPolygon = wrf.getPolygon (i, j);
                     double wrfArea = ((OGRPolygon*)wrfPolygon)->get_Area ();
 
                     OGRGeometry* wrfPolygonInCorineCoord =
@@ -184,6 +184,11 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
     }
     wrfCoordSys->Release ();
 
+#ifdef _OPENMP
+    boost::scoped_ptr<omp_lock_t> lock (new omp_lock_t);
+    omp_init_lock (lock.get ());
+#endif
+
 #ifndef NOOUTPUT
 #ifdef DEBUG3
     for (size_t i = 11; i < 12; ++i)
@@ -209,9 +214,17 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
             {
 
                 if (verbosity > 1)
+                {
+#ifdef _OPENMP
+                    omp_set_lock (lock.get ());
+#endif
                     cerr << "WARNING: using partly original land use in grid cell "
                          << i << " " << j << " with missing fraction of " << 
                          missing << endl;
+#ifdef _OPENMP
+                    omp_unset_lock (lock.get ());
+#endif
+                }
 
                 clm::ClmFractions originalLandUseFractions
                     = wrf.getLandUseFraction (i, j)->map2Clm ();
@@ -241,6 +254,10 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
             wrf.writeGlacierFraction (i, j, fractions[i][j].getGlacierFraction ());
             wrf.writeWetlandFraction (i, j, fractions[i][j].getWetlandFraction ());
         }
+#endif
+
+#ifdef _OPENMP
+    omp_destroy_lock (lock.get ());
 #endif
 
 }

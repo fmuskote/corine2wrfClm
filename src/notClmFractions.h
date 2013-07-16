@@ -7,7 +7,7 @@
 class NotClmFractions : public Fractions
 {
     public:
-        NotClmFractions (const size_t& typeCount);
+        NotClmFractions (size_t typeCount);
         virtual clm::ClmFractions map2Clm () const = 0;
 };
 

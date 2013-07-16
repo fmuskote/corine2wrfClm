@@ -12,7 +12,6 @@ class Fractions
 {
     private:
         boost::scoped_array<double> _data;
-        bool                        _withCheck;
     protected:
         size_t                      _typeCount;
     public:
@@ -21,9 +20,8 @@ class Fractions
          * @brief Constructor
          *
          * @param typeCount The amount of types
-         * @param withCheck Should the consistency be checked all the time?
          */
-        Fractions (const size_t& typeCount, const bool withCheck = true);
+        Fractions (size_t typeCount);
 
         /**
          * @brief Copy constructor
@@ -44,7 +42,7 @@ class Fractions
          *
          * @return 
          */
-        const double& operator[] (const size_t& index) const;
+        const double& operator[] (size_t index) const;
 
         /**
          * @brief 
@@ -52,7 +50,7 @@ class Fractions
          * @param index
          * @param value
          */
-        void set (const size_t& index, const double& value);
+        void set (size_t index, double value);
 
         /**
          * @brief 
@@ -60,7 +58,7 @@ class Fractions
          * @param index
          * @param value
          */
-        void add (const size_t& index, const double& value);
+        void add (size_t index, double value);
 
         /**
          * @brief 

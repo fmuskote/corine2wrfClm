@@ -61,6 +61,7 @@ fi
 AC_CHECK_HEADERS([boost/scoped_array.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
 AC_CHECK_HEADERS([boost/shared_ptr.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
 AC_CHECK_HEADERS([boost/multi_array.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
+AC_CHECK_HEADERS([boost/array.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
 
 NETCDF_CFLAGS="`$NETCDF_CONFIG --cflags`"
 NETCDF_LIBS="`$NETCDF_CONFIG --libs`_c++"

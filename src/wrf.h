@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
 #include "notClmFractions.h"
@@ -29,58 +30,57 @@ namespace wrf
     class File : public NcFile, public GeoRaster
     {
       private:
-#ifdef _OPENMP
-        omp_lock_t * _lock;
-#endif
-
         size_t _iSize;
         size_t _jSize;
-        NcError* errorBehavior;
+        boost::scoped_ptr<NcError> errorBehavior;
+
+#ifdef _OPENMP
+        boost::scoped_ptr<omp_lock_t> _lock;
+#endif
 
         const double getDx () const;
         const double getDy () const;
-        void write0Dto2D (const std::string&, const size_t&, const size_t&, const double&);
+        void write0Dto2D (std::string, size_t, size_t, double);
 
         boost::multi_array<float, 3> mosaicArray (
-                const boost::multi_array<float, 2>,
-                const size_t, const size_t, const size_t);
+                const boost::multi_array<float, 2>&,
+                size_t, size_t, size_t) const;
 
       public:
-        File (const std::string, FileMode = ReadOnly);
+        File (std::string, FileMode = ReadOnly);
         ~File ();
-        const size_t iSize () const;
-        const size_t jSize () const;
-        boost::shared_ptr<NotClmFractions> getLandUseFraction (const size_t, const size_t);
-        void writeClmPftTypeFractions (const size_t&, const size_t&, const clm::ClmFractions&);
+        size_t iSize () const;
+        size_t jSize () const;
+        boost::shared_ptr<NotClmFractions> getLandUseFraction (size_t, size_t);
+        void writeClmPftTypeFractions (size_t, size_t, const clm::ClmFractions&);
         bool isModisLUType () const;
         bool isUsgsLUType () const;
-        boost::multi_array<float, 2> getClmType (const size_t);
+        boost::multi_array<float, 2> getClmType (size_t);
         void createMosaic (wrf::File&);
 #ifdef _OPENMP
         void lock ();
         void unlock ();
 #endif
-        void writeWaterFraction (const size_t&, const size_t&, const double&);
-        void writeUrbanFraction (const size_t&, const size_t&, const double&);
-        void writeGlacierFraction (const size_t&, const size_t&, const double&);
-        void writeWetlandFraction (const size_t&, const size_t&, const double&);
+        void writeWaterFraction (size_t, size_t, double);
+        void writeUrbanFraction (size_t, size_t, double);
+        void writeGlacierFraction (size_t, size_t, double);
+        void writeWetlandFraction (size_t, size_t, double);
 
         template<typename T, size_t D>
         void write (
-                const std::string& varName,
+                std::string varName,
                 const boost::multi_array<T, D>& data);
         template<typename T, size_t D>
         void write (
-                const std::string& varName,
+                std::string varName,
                 const boost::multi_array<T, D>& data,
                 const boost::array<long, D+1>& offset,
                 const boost::array<long, D+1>& count);
         template<typename T, size_t D>
-        boost::multi_array<T, D> read (
-                const std::string& varName);
+        boost::multi_array<T, D> read (std::string varName);
         template<typename T, size_t D>
         boost::multi_array<T, D> read (
-                const std::string& varName,
+                std::string varName,
                 boost::array<long, D+1>& offset,
                 boost::array<long, D+1>& count);
 
@@ -88,7 +88,7 @@ namespace wrf
 
     template<typename T, size_t D>
     void File::write (
-            const std::string& varName,
+            std::string varName,
             const boost::multi_array<T, D>& data) {
         NcVar* variable = get_var (varName.c_str ());
         if (!variable)
@@ -106,7 +106,7 @@ namespace wrf
     }
     template<typename T, size_t D>
     void File::write (
-            const std::string& varName,
+            std::string varName,
             const boost::multi_array<T, D>& data,
             const boost::array<long, D+1>& offset,
             const boost::array<long, D+1>& count) {
@@ -127,7 +127,7 @@ namespace wrf
     }
     template<typename T, size_t D>
     boost::multi_array<T, D> File::read (
-            const std::string& varName,
+            std::string varName,
             boost::array<long, D+1>& offset,
             boost::array<long, D+1>& count) {
         NcVar* variable = get_var (varName.c_str ());
@@ -157,8 +157,7 @@ namespace wrf
         return data;
     }
     template<typename T, size_t D>
-    boost::multi_array<T, D> File::read (
-            const std::string& varName) {
+    boost::multi_array<T, D> File::read (std::string varName) {
         NcVar* variable = get_var (varName.c_str ());
         if (!variable)
             throw VariableNotExistException ();

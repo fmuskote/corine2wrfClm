@@ -14,29 +14,27 @@ GeoRaster::~GeoRaster ()
     _coordinateSystem->Release ();
 }
     
-const Coordinate GeoRaster::getCoordinate (const double i, const double j) const
+Coordinate GeoRaster::getCoordinate (double i, double j) const
 {
     double x, y;
-    affineTransformation (i, j, &x, &y);
+    affineTransformation (i, j, x, y);
     Coordinate result (x, y, _coordinateSystem);
     return result;
 }
 
-void GeoRaster::affineTransformation (const double i, const double j,
-        double * x, double * y) const
+void GeoRaster::affineTransformation (double i, double j, double& x, double& y) const
 {
-    *x = _padfTransform[0] + i*_padfTransform[1] + j*_padfTransform[2];
-    *y = _padfTransform[3] + i*_padfTransform[4] + j*_padfTransform[5];
+    x = _padfTransform[0] + i*_padfTransform[1] + j*_padfTransform[2];
+    y = _padfTransform[3] + i*_padfTransform[4] + j*_padfTransform[5];
 }
 
-void GeoRaster::inverseAffineTransformation (const double x, const double y,
-	double * i, double * j) const
+void GeoRaster::inverseAffineTransformation (double x, double y, double& i, double& j) const
 {
-    *i = _padfTransformInverse[0] + x*_padfTransformInverse[1] + y*_padfTransformInverse[2];
-    *j = _padfTransformInverse[3] + x*_padfTransformInverse[4] + y*_padfTransformInverse[5];
+    i = _padfTransformInverse[0] + x*_padfTransformInverse[1] + y*_padfTransformInverse[2];
+    j = _padfTransformInverse[3] + x*_padfTransformInverse[4] + y*_padfTransformInverse[5];
 }
 
-OGRGeometry* GeoRaster::getPolygon2 (const size_t i, const size_t j) const
+OGRGeometry* GeoRaster::getPolygon (size_t i, size_t j) const
 {
     if (i > iSize () or j > jSize ())
         throw OutOfDomainException ();
@@ -46,13 +44,13 @@ OGRGeometry* GeoRaster::getPolygon2 (const size_t i, const size_t j) const
 
     OGRLinearRing* ring = new OGRLinearRing ();
     double x, y;
-    affineTransformation ((double)i - 0.5, (double)j - 0.5, &x, &y);
+    affineTransformation ((double)i - 0.5, (double)j - 0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)i + 0.5, (double)j - 0.5, &x, &y);
+    affineTransformation ((double)i + 0.5, (double)j - 0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)i + 0.5, (double)j + 0.5, &x, &y);
+    affineTransformation ((double)i + 0.5, (double)j + 0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)i - 0.5, (double)j + 0.5, &x, &y);
+    affineTransformation ((double)i - 0.5, (double)j + 0.5, x, y);
     ring->addPoint (x, y);
 
     ring->closeRings ();
@@ -67,13 +65,13 @@ OGRGeometry* GeoRaster::getCompleteExtend () const
 
     OGRLinearRing* ring = new OGRLinearRing ();
     double x, y;
-    affineTransformation (-0.5, -0.5, &x, &y);
+    affineTransformation (-0.5, -0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)iSize () + 0.5, -0.5, &x, &y);
+    affineTransformation ((double)iSize () + 0.5, -0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)iSize () + 0.5, (double)jSize () + 0.5, &x, &y);
+    affineTransformation ((double)iSize () + 0.5, (double)jSize () + 0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation (-0.5, (double)jSize () + 0.5, &x, &y);
+    affineTransformation (-0.5, (double)jSize () + 0.5, x, y);
     ring->addPoint (x, y);
 
     ring->closeRings ();
@@ -86,14 +84,14 @@ OGRSpatialReference* GeoRaster::getCoordinateSystem () const
     return _coordinateSystem;
 }
 
-void GeoRaster::getArrayIndex (const Coordinate coord, double * i, double * j) const
+void GeoRaster::getArrayIndex (const Coordinate coord, double& i, double& j) const
 {
     Coordinate coordInMySystem = coord.transform (getCoordinateSystem ());
     inverseAffineTransformation (coordInMySystem.getX (),
 	    coordInMySystem.getY (), i, j);
 }
 
-void GeoRaster::writeEmptyGeoTiff (const string fileName)
+void GeoRaster::writeEmptyGeoTiff (string fileName)
 {
     GDALAllRegister ();
 

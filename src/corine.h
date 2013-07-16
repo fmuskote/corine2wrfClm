@@ -67,7 +67,7 @@ namespace corine {
             double getGlacierFraction () const;
     };
 
-    const std::string getFileName (const std::string, const size_t);
+    std::string getFileName (std::string, size_t);
 
 }
                  
