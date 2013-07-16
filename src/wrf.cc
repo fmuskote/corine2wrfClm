@@ -5,7 +5,7 @@
 #include <cstring>
 #include <exception>
 #include <boost/scoped_ptr.hpp>
-#include "wrfFile.h"
+#include "wrf.h"
 #include "clm.h"
 #include "modis.h"
 #include "usgs.h"
@@ -24,10 +24,9 @@ using std::setfill;
 using std::setw;
 using std::uppercase;
 
-const std::string WrfFile::clmPFTtypeDimensionName = "clm_pfttypes";
-const std::string WrfFile::clmPFTtypeFractionName = "clm_landuse_fraction_";
+using namespace wrf;
 
-WrfFile::WrfFile (const string fileName, FileMode fileMode) : NcFile (fileName.c_str (), fileMode) {
+File::File (const string fileName, FileMode fileMode) : NcFile (fileName.c_str (), fileMode) {
 
     errorBehavior = new NcError (NcError::silent_nonfatal);
 
@@ -75,7 +74,7 @@ WrfFile::WrfFile (const string fileName, FileMode fileMode) : NcFile (fileName.c
     omp_init_lock (_lock);
 #endif
 }
-WrfFile::~WrfFile () {
+File::~File () {
 #ifdef _OPENMP
     omp_destroy_lock (_lock);
     delete _lock;
@@ -83,19 +82,19 @@ WrfFile::~WrfFile () {
     close ();
     delete errorBehavior;
 }
-inline const size_t WrfFile::iSize () const {
+inline const size_t File::iSize () const {
     return _iSize;
 }
-inline const size_t WrfFile::jSize () const {
+inline const size_t File::jSize () const {
     return _jSize;
 }
-const double WrfFile::getDx () const {
+const double File::getDx () const {
     return get_att ("DX")->as_double (0);
 }
-const double WrfFile::getDy () const {
+const double File::getDy () const {
     return get_att ("DY")->as_double (0);
 }
-boost::shared_ptr<NotClmFractions> WrfFile::getLandUseFraction (const size_t i, const size_t j) {
+boost::shared_ptr<NotClmFractions> File::getLandUseFraction (const size_t i, const size_t j) {
     // check indizes against domain size //
     //-----------------------------------//
     if (i > iSize () or j > jSize ())
@@ -136,7 +135,7 @@ boost::shared_ptr<NotClmFractions> WrfFile::getLandUseFraction (const size_t i, 
 
     return result;
 }
-void WrfFile::writeClmPftTypeFractions (const size_t& i, const size_t& j, const clm::ClmFractions& fractions) {
+void File::writeClmPftTypeFractions (const size_t& i, const size_t& j, const clm::ClmFractions& fractions) {
     for (size_t type = 0; type < clm::typeCount - 1; type++) {
         stringstream stream;
         stream << clmPFTtypeFractionName;
@@ -188,7 +187,7 @@ void WrfFile::writeClmPftTypeFractions (const size_t& i, const size_t& j, const 
 
     }
 }
-bool WrfFile::isModisLUType () const {
+bool File::isModisLUType () const {
     char* luType = get_att ("MMINLU")->as_string (0);
     NcDim* landCatDim = get_dim ("land_cat_stag");
     if (landCatDim == NULL) throw UnknownLUTypeException ();
@@ -201,7 +200,7 @@ bool WrfFile::isModisLUType () const {
     delete[] luType;
     return result;
 }
-bool WrfFile::isUsgsLUType () const {
+bool File::isUsgsLUType () const {
     char* luType = get_att ("MMINLU")->as_string (0);
     NcDim* landCatDim = get_dim ("land_cat_stag");
     if (landCatDim == NULL) throw UnknownLUTypeException ();
@@ -214,7 +213,7 @@ bool WrfFile::isUsgsLUType () const {
     delete[] luType;
     return result;
 }
-float* WrfFile::getClmType (const size_t type) {
+float* File::getClmType (const size_t type) {
     NcVar* variable = get_var ("clm_landuse_fraction");
     long offset[4] = {0, (long) type, 0, 0};
     long count[4] = {1, 1, (long) jSize (), (long) iSize ()};
@@ -239,7 +238,7 @@ float* WrfFile::getClmType (const size_t type) {
     delete[] data;
     return result;
 }
-void WrfFile::createMosaic (WrfFile* highResFile) {
+void File::createMosaic (File* highResFile) {
 
     float dx = getDx ();
     float dy = getDy ();
@@ -264,7 +263,9 @@ void WrfFile::createMosaic (WrfFile* highResFile) {
     if (get_dim ("mosaic_cells")->size () != (int)mosaicCellCount)
         throw WrongMosaicGeometryException ();
 
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
     for (size_t type = 0; type < clm::typeCount - 1; type++) {
 
         stringstream highResVarName;
@@ -320,27 +321,27 @@ void WrfFile::createMosaic (WrfFile* highResFile) {
 }
 
 #ifdef _OPENMP
-void WrfFile::lock () {
+void File::lock () {
     omp_set_lock (_lock);
 }
-void WrfFile::unlock () {
+void File::unlock () {
     omp_unset_lock (_lock);
 }
 #endif
 
-void WrfFile::writeWaterFraction (const size_t& i, const size_t& j, const double& fraction) {
+void File::writeWaterFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("waterFraction", i, j, fraction);
 }
-void WrfFile::writeUrbanFraction (const size_t& i, const size_t& j, const double& fraction) {
+void File::writeUrbanFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("urbanFraction", i, j, fraction);
 }
-void WrfFile::writeGlacierFraction (const size_t& i, const size_t& j, const double& fraction) {
+void File::writeGlacierFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("glacierFraction", i, j, fraction);
 }
-void WrfFile::writeWetlandFraction (const size_t& i, const size_t& j, const double& fraction) {
+void File::writeWetlandFraction (const size_t& i, const size_t& j, const double& fraction) {
     write0Dto2D ("wetlandFraction", i, j, fraction);
 }
-void WrfFile::write0Dto2D (const string& varName, const size_t& i, const size_t& j, const double& value) {
+void File::write0Dto2D (const string& varName, const size_t& i, const size_t& j, const double& value) {
 #ifdef _OPENMP
         lock ();
 #endif
@@ -380,7 +381,7 @@ void WrfFile::write0Dto2D (const string& varName, const size_t& i, const size_t&
     unlock ();
 #endif
 }
-void WrfFile::write3D (const string varName, const float* data, const size_t zCount) {
+void File::write3D (const string varName, const float* data, const size_t zCount) {
     NcVar* variable = get_var (varName.c_str ());
     if (!variable)
         throw VariableNotExistExeption ();
@@ -397,7 +398,7 @@ void WrfFile::write3D (const string varName, const float* data, const size_t zCo
     unlock ();
 #endif
 }
-void WrfFile::read2D (const string varName, float* data) {
+void File::read2D (const string varName, float* data) {
     NcVar* variable = get_var (varName.c_str ());
     if (!variable)
         throw VariableNotExistExeption ();
@@ -414,9 +415,9 @@ void WrfFile::read2D (const string varName, float* data) {
     unlock ();
 #endif
 }
-void WrfFile::mosaicArray (const float* highResData, const size_t highResISize,
-        const size_t highResJSize, float* data, const size_t mosaicCellCount,
-        const size_t dxFac, const size_t dyFac) {
+void File::mosaicArray (
+        const float* highResData, const size_t highResISize, const size_t highResJSize,
+        float* data, const size_t mosaicCellCount, const size_t dxFac, const size_t dyFac) {
 
     const float** highResData2D = new const float*[highResJSize];
     for (size_t j = 0; j < highResJSize; j++)

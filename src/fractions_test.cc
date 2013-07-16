@@ -25,12 +25,14 @@ BOOST_AUTO_TEST_CASE( fractions_test )
     Fractions f1 (size);
     BOOST_CHECK_THROW (f1.add (0, 2.0), FractionInconsistent);
     
+    // check setter
     Fractions f2 (size);
     double value = 0.5;
     f2.set (0, value);
     BOOST_CHECK_CLOSE (f2[0],         value,       tolerance);
     BOOST_CHECK_CLOSE (f2.missing (), 1.0 - value, tolerance);
 
+    // check cumulative setter
     Fractions f3 (size);
     double value1 = 0.5;
     double value2 = 0.3;

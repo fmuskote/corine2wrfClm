@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([corine2wrfClm], [0.1], [Matthias.Grzeschik@uni-tuebingen.de])
+AC_INIT([corine2wrfClm], [0.1], [s.schwampf@gmx.de])
 AC_PREREQ([2.59])
 AC_LANG([C++])
 AM_INIT_AUTOMAKE([1.10 no-define])

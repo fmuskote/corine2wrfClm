@@ -7,7 +7,7 @@
 
 #include "notClmFractions.h"
 #include "corine.h"
-#include "wrfFile.h"
+#include "wrf.h"
 #include "shapeFile.h"
 #include "clm.h"
 
@@ -95,9 +95,9 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
 {
     // Open WRF file //
     //---------------//
-    WrfFile wrf (wrfFileName, WrfFile::Write);
+    wrf::File wrf (wrfFileName, wrf::File::Write);
     if (!(wrf.isUsgsLUType () or wrf.isModisLUType ()))
-        throw UnknownLUTypeException ();
+        throw wrf::UnknownLUTypeException ();
 
     boost::multi_array<corine::CorineFractions, 2>
         fractions (boost::extents[wrf.iSize ()][wrf.jSize ()]);
@@ -118,7 +118,9 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
 #ifdef DEBUG2
         for (size_t i = 0; i < 1; ++i)
 #else
+#ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
+#endif
         for (size_t i = 0; i < wrf.iSize (); ++i)
 #endif
         {
@@ -187,7 +189,9 @@ void doTheWork (const string corineFileDirectory, const string wrfFileName)
     for (size_t i = 11; i < 12; ++i)
         for (size_t j = 15; j < 16; ++j)
 #else
+#ifdef _OPENMP
 #pragma omp parallel for
+#endif
     for (size_t i = 0; i < wrf.iSize (); ++i)
         for (size_t j = 0; j < wrf.jSize (); ++j)
 #endif
