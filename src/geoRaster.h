@@ -6,7 +6,6 @@
 #include <string>
 #include <boost/multi_array.hpp>
 #include "coordinate.h"
-#include "clm.h"
 
 class GeoRaster
 {

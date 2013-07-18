@@ -1,14 +1,14 @@
 #include <iostream>
-#include <iomanip>
-#include <vector>
 #include <string>
 #include <getopt.h>
 #include <boost/multi_array.hpp>
 
-#include "notClmFractions.h"
+#include <ogr_spatialref.h>
+#include <ogrsf_frmts.h>
+#include <ogr_geometry.h>
+
 #include "corine.h"
 #include "wrf.h"
-#include "shapeFile.h"
 #include "clm.h"
 
 
@@ -19,8 +19,6 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
-
-#include <netcdfcpp.h>
 
 using namespace std;
 void doTheWork  (const string, const string);

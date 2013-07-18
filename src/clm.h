@@ -1,7 +1,6 @@
 #ifndef CLM_H
 #define CLM_H
 
-#include <cstdlib>
 #include "fractions.h"
 
 namespace clm
