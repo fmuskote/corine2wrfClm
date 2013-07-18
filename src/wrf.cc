@@ -27,7 +27,7 @@ using namespace wrf;
 
 File::File (string fileName, FileMode fileMode)
     : NcFile (fileName.c_str (), fileMode),
-      errorBehavior (new NcError (NcError::silent_nonfatal))
+      _errorBehavior (new NcError (NcError::silent_nonfatal))
 #ifdef _OPENMP
       , _lock (new omp_lock_t)
 #endif
@@ -76,6 +76,7 @@ File::File (string fileName, FileMode fileMode)
     omp_init_lock (_lock.get ());
 #endif
 }
+
 File::~File ()
 {
 #ifdef _OPENMP
@@ -83,19 +84,29 @@ File::~File ()
 #endif
     close ();
 }
-inline size_t File::iSize () const {
+
+inline size_t File::iSize () const
+{
     return _iSize;
 }
-inline size_t File::jSize () const {
+
+inline size_t File::jSize () const
+{
     return _jSize;
 }
-const double File::getDx () const {
+
+double File::getDx () const
+{
     return get_att ("DX")->as_double (0);
 }
-const double File::getDy () const {
+
+double File::getDy () const
+{
     return get_att ("DY")->as_double (0);
 }
-boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j) {
+
+boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j)
+{
     // check indizes against domain size //
     //-----------------------------------//
     if (i > iSize () or j > jSize ())
@@ -136,8 +147,11 @@ boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j)
 
     return result;
 }
-void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions& fractions) {
-    for (size_t type = 0; type < clm::typeCount - 1; type++) {
+
+void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions& fractions)
+{
+    for (size_t type = 0; type < clm::typeCount - 1; type++)
+    {
         stringstream stream;
         stream << clmPFTtypeFractionName;
         stream.fill ('0');
@@ -153,7 +167,8 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
 #endif
 
         NcVar* variable = get_var (varName.c_str ());
-        if (!variable) {
+        if (!variable)
+        {
             boost::scoped_array<const NcDim*> dims (
                     new const NcDim*[3]);
             dims[0] = get_dim ("Time");
@@ -180,7 +195,9 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
 
     }
 }
-bool File::isModisLUType () const {
+
+bool File::isModisLUType () const
+{
     char* luType = get_att ("MMINLU")->as_string (0);
     NcDim* landCatDim = get_dim ("land_cat_stag");
     if (landCatDim == NULL) throw UnknownLUTypeException ();
@@ -193,7 +210,9 @@ bool File::isModisLUType () const {
     delete[] luType;
     return result;
 }
-bool File::isUsgsLUType () const {
+
+bool File::isUsgsLUType () const
+{
     char* luType = get_att ("MMINLU")->as_string (0);
     NcDim* landCatDim = get_dim ("land_cat_stag");
     if (landCatDim == NULL) throw UnknownLUTypeException ();
@@ -206,14 +225,18 @@ bool File::isUsgsLUType () const {
     delete[] luType;
     return result;
 }
-boost::multi_array<float, 2> File::getClmType (size_t type) {
+
+boost::multi_array<float, 2> File::getClmType (size_t type)
+{
     boost::array<long, 4> offset = {{0, (long) type, 0, 0}};
     boost::array<long, 4> count = {{1, 1, (long) jSize (), (long) iSize ()}};
 
     boost::multi_array<float, 3> data = read<float, 3> ("clm_landuse_fraction", offset, count);
     return data[boost::indices[0][boost::multi_array_types::index_range(0, jSize ())][boost::multi_array_types::index_range (0, iSize ())]];
 }
-void File::createMosaic (File& highResFile) {
+
+void File::createMosaic (File& highResFile)
+{
 
     float dx = getDx ();
     float dy = getDy ();
@@ -241,8 +264,8 @@ void File::createMosaic (File& highResFile) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (size_t type = 0; type < clm::typeCount - 1; type++) {
-
+    for (size_t type = 0; type < clm::typeCount - 1; type++)
+    {
         stringstream highResVarName;
         highResVarName << clmPFTtypeFractionName;
         highResVarName.fill ('0');
@@ -286,27 +309,39 @@ void File::createMosaic (File& highResFile) {
 }
 
 #ifdef _OPENMP
-void File::lock () {
+void File::lock ()
+{
     omp_set_lock (_lock.get ());
 }
-void File::unlock () {
+
+void File::unlock ()
+{
     omp_unset_lock (_lock.get ());
 }
 #endif
 
-void File::writeWaterFraction (size_t i, size_t j, double fraction) {
+void File::writeWaterFraction (size_t i, size_t j, double fraction)
+{
     write0Dto2D ("waterFraction", i, j, fraction);
 }
-void File::writeUrbanFraction (size_t i, size_t j, double fraction) {
+
+void File::writeUrbanFraction (size_t i, size_t j, double fraction)
+{
     write0Dto2D ("urbanFraction", i, j, fraction);
 }
-void File::writeGlacierFraction (size_t i, size_t j, double fraction) {
+
+void File::writeGlacierFraction (size_t i, size_t j, double fraction)
+{
     write0Dto2D ("glacierFraction", i, j, fraction);
 }
-void File::writeWetlandFraction (size_t i, size_t j, double fraction) {
+
+void File::writeWetlandFraction (size_t i, size_t j, double fraction)
+{
     write0Dto2D ("wetlandFraction", i, j, fraction);
 }
-void File::write0Dto2D (string varName, size_t i, size_t j, double value) {
+
+void File::write0Dto2D (string varName, size_t i, size_t j, double value)
+{
 #ifdef _OPENMP
         lock ();
 #endif
@@ -346,6 +381,7 @@ void File::write0Dto2D (string varName, size_t i, size_t j, double value) {
     unlock ();
 #endif
 }
+
 boost::multi_array<float, 3> File::mosaicArray (
         const boost::multi_array<float, 2>& highResData,
         size_t mosaicCellCount, size_t dxFac, size_t dyFac) const

@@ -5,11 +5,13 @@
 #include "notClmFractions.h"
 #include "clm.h"
 
-namespace corine {
+namespace corine
+{
 
     const size_t typeCount = 44;
 
-    enum Type {
+    enum Type
+    {
         continuousUrbanFabric      =  0,
         discontinuousUrbanFabric   =  1,
         industrialCommercial       =  2,

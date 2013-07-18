@@ -4,11 +4,13 @@
 #include <cstdlib>
 #include "fractions.h"
 
-namespace clm {
+namespace clm
+{
 
     const size_t typeCount = 17;
 
-    enum Type {
+    enum Type
+    {
         noPFT                            =  0,
         needleleafEvergreenTreeTemperate =  1,
         needleleafEvergreenTreeBoreal    =  2,

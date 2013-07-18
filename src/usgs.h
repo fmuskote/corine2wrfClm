@@ -4,11 +4,13 @@
 #include "notClmFractions.h"
 #include "clm.h"
 
-namespace usgs {
+namespace usgs
+{
 
     const size_t typeCount = 24;
 
-    enum Type {
+    enum Type
+    {
         urbanAndBuildUpLand              =  0,
         drylandCropAndPasture            =  1,
         irrigatedCroplandAndPasture      =  2,

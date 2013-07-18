@@ -22,7 +22,7 @@ namespace wrf
     const std::string clmPFTtypeFractionName = "clm_landuse_fraction_";
 
     class VariableNotExistException {};
-    class NotUsgsLanduseExeption {};
+    class NotUsgsLanduseException {};
     class WrongDimensionSizeException {};
     class UnknownLUTypeException {};
     class WrongMosaicGeometryException {};
@@ -32,14 +32,14 @@ namespace wrf
       private:
         size_t _iSize;
         size_t _jSize;
-        boost::scoped_ptr<NcError> errorBehavior;
+        boost::scoped_ptr<NcError> _errorBehavior;
 
 #ifdef _OPENMP
         boost::scoped_ptr<omp_lock_t> _lock;
 #endif
 
-        const double getDx () const;
-        const double getDy () const;
+        double getDx () const;
+        double getDy () const;
         void write0Dto2D (std::string, size_t, size_t, double);
 
         boost::multi_array<float, 3> mosaicArray (
@@ -89,7 +89,8 @@ namespace wrf
     template<typename T, size_t D>
     void File::write (
             std::string varName,
-            const boost::multi_array<T, D>& data) {
+            const boost::multi_array<T, D>& data)
+    {
         NcVar* variable = get_var (varName.c_str ());
         if (!variable)
             throw VariableNotExistException ();
@@ -104,12 +105,14 @@ namespace wrf
         unlock ();
 #endif
     }
+
     template<typename T, size_t D>
     void File::write (
             std::string varName,
             const boost::multi_array<T, D>& data,
             const boost::array<long, D+1>& offset,
-            const boost::array<long, D+1>& count) {
+            const boost::array<long, D+1>& count)
+    {
         NcVar* variable = get_var (varName.c_str ());
         if (!variable)
             throw VariableNotExistException ();
@@ -125,11 +128,13 @@ namespace wrf
         unlock ();
 #endif
     }
+
     template<typename T, size_t D>
     boost::multi_array<T, D> File::read (
             std::string varName,
             boost::array<long, D+1>& offset,
-            boost::array<long, D+1>& count) {
+            boost::array<long, D+1>& count)
+    {
         NcVar* variable = get_var (varName.c_str ());
         if (!variable)
             throw VariableNotExistException ();
@@ -156,8 +161,10 @@ namespace wrf
 
         return data;
     }
+
     template<typename T, size_t D>
-    boost::multi_array<T, D> File::read (std::string varName) {
+    boost::multi_array<T, D> File::read (std::string varName)
+    {
         NcVar* variable = get_var (varName.c_str ());
         if (!variable)
             throw VariableNotExistException ();

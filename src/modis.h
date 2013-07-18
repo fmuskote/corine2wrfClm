@@ -5,11 +5,13 @@
 #include "clm.h"
 #include "usgs.h"
 
-namespace modis {
+namespace modis
+{
 
     const size_t typeCount = 20;
 
-    enum Type {
+    enum Type
+    {
         evergreenNeedleleafForest          =  0,
         evergreenBroadleafForest           =  1,
         deciduousNeedleleafForest          =  2,
