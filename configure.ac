@@ -39,32 +39,35 @@ GDAL_LIBS="`$GDAL_CONFIG --libs`"
 # CHECK FOR NETCDF #
 ####################
 
-AC_ARG_WITH([nc-config],
-            [AS_HELP_STRING([--with-nc-config=FILE], [specify an alternative nc-config file])],
-            [NETCDF_CONFIG="$withval"], [NETCDF_CONFIG=""])
-if test -z $NETCDF_CONFIG;
-then
-    AC_PATH_PROG([NETCDF_CONFIG], [nc-config])
-    if test -z $NETCDF_CONFIG;
-    then
-        AC_MSG_ERROR([could not find nc-config from libnetcdf within the current path. You may need to try re-running configure with a --with-nc-config parameter.])
-    fi
-else
-    if test -f $NETCDF_CONFIG;
-    then
-        AC_MSG_RESULT([Using user-specified nc-config file: $NETCDF_CONFIG])
-    else
-        AC_MSG_ERROR([the user-specified nc-config file $NETCDF_CONFIG does not exist])
-    fi
-fi
+#AC_ARG_WITH([nc-config],
+#            [AS_HELP_STRING([--with-nc-config=FILE], [specify an alternative nc-config file])],
+#            [NETCDF_CONFIG="$withval"], [NETCDF_CONFIG=""])
+#if test -z $NETCDF_CONFIG;
+#then
+#    AC_PATH_PROG([NETCDF_CONFIG], [nc-config])
+#    if test -z $NETCDF_CONFIG;
+#    then
+#        AC_MSG_ERROR([could not find nc-config from libnetcdf within the current path. You may need to try re-running configure with a --with-nc-config parameter.])
+#    fi
+#else
+#    if test -f $NETCDF_CONFIG;
+#    then
+#        AC_MSG_RESULT([Using user-specified nc-config file: $NETCDF_CONFIG])
+#    else
+#        AC_MSG_ERROR([the user-specified nc-config file $NETCDF_CONFIG does not exist])
+#    fi
+#fi
+#
+#NETCDF_CFLAGS="`$NETCDF_CONFIG --cflags`"
+#NETCDF_LIBS="`$NETCDF_CONFIG --libs`_c++"
+
+
+AC_CHECK_HEADERS([netcdf], [], [AC_MSG_ERROR(You need NetCDF-4 C++ libraries)])
 
 AC_CHECK_HEADERS([boost/scoped_array.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
 AC_CHECK_HEADERS([boost/shared_ptr.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
 AC_CHECK_HEADERS([boost/multi_array.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
 AC_CHECK_HEADERS([boost/array.hpp], [], [AC_MSG_ERROR(You need the Boost libraries.)])
-
-NETCDF_CFLAGS="`$NETCDF_CONFIG --cflags`"
-NETCDF_LIBS="`$NETCDF_CONFIG --libs`_c++"
 
 # CHECK FOR OPENMP #
 ####################

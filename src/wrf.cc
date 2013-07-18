@@ -26,29 +26,32 @@ using std::uppercase;
 using namespace wrf;
 
 File::File (string fileName, FileMode fileMode)
-    : NcFile (fileName.c_str (), fileMode),
-      _errorBehavior (new NcError (NcError::silent_nonfatal))
+    : NcFile (fileName.c_str (), fileMode)
 #ifdef _OPENMP
       , _lock (new omp_lock_t)
 #endif
 {
 
-    NcDim* dimension = get_dim ("west_east");
-    if (dimension == NULL) throw UnknownLUTypeException ();
-    _iSize = dimension->size ();
-
-    dimension = get_dim ("south_north");
-    if (dimension == NULL) throw UnknownLUTypeException ();
-    _jSize = dimension->size ();
+    _iSize = getDim ("west_east").getSize ();
+    _jSize = getDim ("south_north").getSize ();
 
     // create projection for this WRF file //
     //-------------------------------------//
+    double truelat1;
+    getAtt ("TRUELAT1").getValues (&truelat1);
+    double truelat2;
+    getAtt ("TRUELAT2").getValues (&truelat2);
+    double cen_lat;
+    getAtt ("CEN_LAT").getValues (&cen_lat);
+    double cen_lon;
+    getAtt ("CEN_LON").getValues (&cen_lon);
+
     stringstream ss;
     ss << "+proj=lcc"
-       << " +lat_1="    << (*get_att ("TRUELAT1")).as_double (0)
-       << " +lat_2="    << (*get_att ("TRUELAT2")).as_double (0)
-       << " +lat_0="    << (*get_att ("CEN_LAT")).as_double (0)
-       << " +lon_0="    << (*get_att ("CEN_LON")).as_double (0)
+       << " +lat_1="    << truelat1
+       << " +lat_2="    << truelat2
+       << " +lat_0="    << cen_lat
+       << " +lon_0="    << cen_lon
        << " +x_0="      << (((double) iSize ())/2.0 * getDx ())
        << " +y_0="      << (((double) jSize ())/2.0 * getDy ())
        << " +ellps=WGS84 +datum=WGS84";
@@ -82,7 +85,6 @@ File::~File ()
 #ifdef _OPENMP
     omp_destroy_lock (_lock.get ());
 #endif
-    close ();
 }
 
 inline size_t File::iSize () const
@@ -97,12 +99,16 @@ inline size_t File::jSize () const
 
 double File::getDx () const
 {
-    return get_att ("DX")->as_double (0);
+    double result;
+    getAtt ("DX").getValues (&result);
+    return result;
 }
 
 double File::getDy () const
 {
-    return get_att ("DY")->as_double (0);
+    double result;
+    getAtt ("DY").getValues (&result);
+    return result;
 }
 
 boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j)
@@ -114,21 +120,31 @@ boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j)
 
     // allocate output temporary array //
     //---------------------------------//
-    NcDim* landCatDim = get_dim ("land_cat_stag");
-    if (landCatDim == NULL) throw UnknownLUTypeException ();
-    size_t landCatStag = landCatDim->size ();
+    netCDF::NcDim landCatDim = getDim ("land_cat_stag");
+
+    size_t landCatStag = landCatDim.getSize ();
     boost::scoped_array<float> indexRate (new float[landCatStag]);
 
     // read from NetCDF //
     //------------------//
-    NcVar* variable = get_var ("LANDUSEF");
-    long offset[4] = {0, 0, (long) j, (long) i};
-    long count[4] = {1, (long) landCatStag, 1, 1};
+    netCDF::NcVar variable = getVar ("LANDUSEF");
+    std::vector<size_t> offset;
+    offset.push_back (0);
+    offset.push_back (0);
+    offset.push_back (j);
+    offset.push_back (i);
+    std::vector<size_t> count;
+    count.push_back (1);
+    count.push_back (landCatStag);
+    count.push_back (1);
+    count.push_back (1);
+
 #ifdef _OPENMP
     lock ();
 #endif
-    variable->set_cur (offset);
-    variable->get (indexRate.get (), count);
+
+    variable.getVar (offset, count, indexRate.get ());
+
 #ifdef _OPENMP
     unlock ();
 #endif
@@ -159,35 +175,39 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
         stream << type;
         string varName = stream.str ();
 
-        long offset[3] = {0, (long) j, (long) i};
-        long counts[3] = {1, 1, 1};
+        std::vector<size_t> offset;
+        offset.push_back (0);
+        offset.push_back (j);
+        offset.push_back (i);
+        std::vector<size_t> count;
+        count.push_back (1);
+        count.push_back (1);
+        count.push_back (1);
 
 #ifdef _OPENMP
         lock ();
 #endif
 
-        NcVar* variable = get_var (varName.c_str ());
-        if (!variable)
+        netCDF::NcVar variable = getVar (varName);
+        if (variable.isNull ())
         {
-            boost::scoped_array<const NcDim*> dims (
-                    new const NcDim*[3]);
-            dims[0] = get_dim ("Time");
-            dims[1] = get_dim ("south_north");
-            dims[2] = get_dim ("west_east");
+            std::vector<netCDF::NcDim> dims;
+            dims.push_back (getDim ("Time"));
+            dims.push_back (getDim ("south_north"));
+            dims.push_back (getDim ("west_east"));
 
-            variable = add_var (varName.c_str (), ncFloat, 3, dims.get ());
+            variable = addVar (varName, netCDF::NcType::nc_FLOAT, dims);
 
-            variable->add_att ("FieldType", 104);
-            variable->add_att ("MemoryOrder", "XY");
-            variable->add_att ("units", "category");
-            variable->add_att ("description", "CLM plant functional types fractions");
-            variable->add_att ("stagger", "M");
-            variable->add_att ("sr_x", "1");
-            variable->add_att ("sr_y", "1");
+            variable.putAtt ("FieldType", netCDF::NcType::nc_INT, 104);
+            variable.putAtt ("MemoryOrder", "XY");
+            variable.putAtt ("units", "category");
+            variable.putAtt ("description", "CLM plant functional types fractions");
+            variable.putAtt ("stagger", "M");
+            variable.putAtt ("sr_x", "1");
+            variable.putAtt ("sr_y", "1");
         }
 
-        variable->set_cur (offset);
-        variable->put (&fractions[type], counts);
+        variable.putVar (offset, count, &fractions[type]);
 
 #ifdef _OPENMP
         unlock ();
@@ -198,38 +218,52 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
 
 bool File::isModisLUType () const
 {
-    char* luType = get_att ("MMINLU")->as_string (0);
-    NcDim* landCatDim = get_dim ("land_cat_stag");
-    if (landCatDim == NULL) throw UnknownLUTypeException ();
+    std::string luType;
+    getAtt ("MMINLU").getValues (luType);
+    int num_land_cat;
+    getAtt ("NUM_LAND_CAT").getValues (&num_land_cat);
+
+    netCDF::NcDim landCatDim = getDim ("land_cat_stag");
+
     bool result = false;
-    if (    strcmp (luType, "MODIFIED_IGBP_MODIS_NOAH") == 0
-        and landCatDim->size () == (long) modis::typeCount
-        and get_att ("NUM_LAND_CAT")->as_int (0) == (long) modis::typeCount)
+    if (    luType == "MODIFIED_IGBP_MODIS_NOAH"
+        and landCatDim.getSize () == modis::typeCount
+        and num_land_cat == (int) modis::typeCount)
         result = true;
 
-    delete[] luType;
     return result;
 }
 
 bool File::isUsgsLUType () const
 {
-    char* luType = get_att ("MMINLU")->as_string (0);
-    NcDim* landCatDim = get_dim ("land_cat_stag");
-    if (landCatDim == NULL) throw UnknownLUTypeException ();
+    std::string luType;
+    getAtt ("MMINLU").getValues (luType);
+    int num_land_cat;
+    getAtt ("NUM_LAND_CAT").getValues (&num_land_cat);
+
+    netCDF::NcDim landCatDim = getDim ("land_cat_stag");
+
     bool result = false;
-    if (    strcmp (luType, "USGS") == 0
-        and landCatDim->size () == (long) usgs::typeCount
-        and get_att ("NUM_LAND_CAT")->as_int (0) == (long) usgs::typeCount)
+    if (    luType == "USGS"
+        and landCatDim.getSize () == usgs::typeCount
+        and num_land_cat == (int) usgs::typeCount)
         result = true;
 
-    delete[] luType;
     return result;
 }
 
 boost::multi_array<float, 2> File::getClmType (size_t type)
 {
-    boost::array<long, 4> offset = {{0, (long) type, 0, 0}};
-    boost::array<long, 4> count = {{1, 1, (long) jSize (), (long) iSize ()}};
+    std::vector<size_t> offset;
+    offset.push_back (0);
+    offset.push_back (type);
+    offset.push_back (0);
+    offset.push_back (0);
+    std::vector<size_t> count;
+    count.push_back (1);
+    count.push_back (1);
+    count.push_back (jSize ());
+    count.push_back (iSize ());
 
     boost::multi_array<float, 3> data = read<float, 3> ("clm_landuse_fraction", offset, count);
     return data[boost::indices[0][boost::multi_array_types::index_range(0, jSize ())][boost::multi_array_types::index_range (0, iSize ())]];
@@ -258,7 +292,7 @@ void File::createMosaic (File& highResFile)
 
     size_t mosaicCellCount = dxFac*dyFac;
 
-    if (get_dim ("mosaic_cells")->size () != (int)mosaicCellCount)
+    if (getDim ("mosaic_cells").getSize () != mosaicCellCount)
         throw WrongMosaicGeometryException ();
 
 #ifdef _OPENMP
@@ -342,41 +376,39 @@ void File::writeWetlandFraction (size_t i, size_t j, double fraction)
 
 void File::write0Dto2D (string varName, size_t i, size_t j, double value)
 {
+    std::vector<size_t> offset;
+    offset.push_back (0);
+    offset.push_back (j);
+    offset.push_back (i);
+    std::vector<size_t> count;
+    count.push_back (1);
+    count.push_back (1);
+    count.push_back (1);
+
 #ifdef _OPENMP
         lock ();
 #endif
-    NcVar* variable = get_var (varName.c_str ());
-    if (!variable) {
-        boost::scoped_array<const NcDim*> dims (
-                new const NcDim*[3]);
-        dims[0] = get_dim ("Time");
-        dims[1] = get_dim ("south_north");
-        dims[2] = get_dim ("west_east");
+    netCDF::NcVar variable = getVar (varName);
+    if (variable.isNull ())
+    {
+        std::vector<netCDF::NcDim> dims;
+        dims.push_back (getDim ("Time"));
+        dims.push_back (getDim ("south_north"));
+        dims.push_back (getDim ("west_east"));
 
-        variable = add_var (varName.c_str (), ncFloat, 3, dims.get ());
-        if (!variable)
-            throw VariableNotExistException ();
+        variable = addVar (varName, netCDF::NcType::nc_FLOAT, dims);
 
-        variable->add_att ("FieldType", 104);
-        variable->add_att ("MemoryOrder", "XY");
-        variable->add_att ("units", "");
-        variable->add_att ("description", varName.c_str ());
-        variable->add_att ("stagger", "M");
-        variable->add_att ("sr_x", "1");
-        variable->add_att ("sr_y", "1");
+        variable.putAtt ("FieldType", netCDF::NcType::nc_INT, 104);
+        variable.putAtt ("MemoryOrder", "XY");
+        variable.putAtt ("units", "");
+        variable.putAtt ("description", varName);
+        variable.putAtt ("stagger", "M");
+        variable.putAtt ("sr_x", "1");
+        variable.putAtt ("sr_y", "1");
     }
-#ifdef _OPENMP
-        unlock ();
-#endif
 
-    long offset[3] = {0, (long) j, (long) i};
-    long counts[3] = {1, 1, 1};
+    variable.putVar (offset, count, &value);
 
-#ifdef _OPENMP
-    lock ();
-#endif
-    variable->set_cur (offset);
-    variable->put (&value, counts);
 #ifdef _OPENMP
     unlock ();
 #endif
