@@ -4,11 +4,11 @@
 
 using namespace modis;
 
-ModisFractions::ModisFractions ()
-    : NotClmFractions (typeCount)
+ModisFractions::ModisFractions()
+    : NotClmFractions (modis::typeCount)
 {}
 
-usgs::UsgsFractions ModisFractions::map2Usgs () const
+usgs::UsgsFractions ModisFractions::map2Usgs() const
 {
     usgs::UsgsFractions usgsFractions;
 
@@ -36,7 +36,7 @@ usgs::UsgsFractions ModisFractions::map2Usgs () const
     return usgsFractions;
 }
 
-clm::ClmFractions ModisFractions::map2Clm () const
+clm::ClmFractions ModisFractions::map2Clm() const
 {
-    return map2Usgs ().map2Clm ();
+    return map2Usgs().map2Clm();
 }

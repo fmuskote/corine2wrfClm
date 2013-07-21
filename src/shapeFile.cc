@@ -7,63 +7,63 @@ using std::string;
 ShapeFile::ShapeFile (string fileName)
 {
     OGRRegisterAll();
-    if (!(_poDS = OGRSFDriverRegistrar::Open (fileName.c_str (), FALSE)))
-        throw ShapeFileOpenFileException ();
-    if (!(_layer = _poDS->GetLayer (0)))
-        throw ShapeFileGetLayerException ();
-    if (!(_coordinateSystem = _layer->GetSpatialRef ()))
-        throw ShapeFileGetSpatialRefException ();
-    _layer->ResetReading ();
+    if (!(poDS_ = OGRSFDriverRegistrar::Open (fileName.c_str(), FALSE)))
+        throw ShapeFileOpenFileException();
+    if (!(layer_ = poDS_->GetLayer (0)))
+        throw ShapeFileGetLayerException();
+    if (!(coordinateSystem_ = layer_->GetSpatialRef()))
+        throw ShapeFileGetSpatialRefException();
+    layer_->ResetReading();
 }
 
-ShapeFile::~ShapeFile ()
+ShapeFile::~ShapeFile()
 {
-    OGRDataSource::DestroyDataSource (_poDS);
+    OGRDataSource::DestroyDataSource (poDS_);
 }
 
-const int ShapeFile::getLayerCount () const
+const int ShapeFile::getLayerCount() const
 {
-    return _poDS->GetLayerCount ();
+    return poDS_->GetLayerCount();
 }
 
-const int ShapeFile::getFeatureCount () const
+const int ShapeFile::getFeatureCount() const
 {
-    return _layer->GetFeatureCount ();
+    return layer_->GetFeatureCount();
 }
 
-void ShapeFile::resetFeatures ()
+void ShapeFile::resetFeatures()
 {
-    _layer->ResetReading ();
+    layer_->ResetReading();
 }
 
-OGRFeature* ShapeFile::getNextFeature ()
+OGRFeature* ShapeFile::getNextFeature()
 {
-    return _layer->GetNextFeature ();
+    return layer_->GetNextFeature();
 }
 
 const double ShapeFile::getAreaRatio (OGRGeometry* targetGeometry,
         OGRSpatialReference* targetCoordSys)
 {
-    resetFeatures ();
+    resetFeatures();
     OGRSpatialReference* shapeCoordSys =
-        getNextFeature ()->GetGeometryRef ()->getSpatialReference ();
-//    OGRSpatialReference* targetCoordSys = targetGeometry->getSpatialReference ();
+        getNextFeature()->GetGeometryRef()->getSpatialReference();
+//    OGRSpatialReference* targetCoordSys = targetGeometry->getSpatialReference();
     OGRCoordinateTransformation* transformation =
         OGRCreateCoordinateTransformation (shapeCoordSys, targetCoordSys);
 
-    double targetArea = ((OGRPolygon*)targetGeometry)->get_Area ();
+    double targetArea = ((OGRPolygon*)targetGeometry)->get_Area();
     double shapeArea = 0.0;
 
-    resetFeatures ();
+    resetFeatures();
     OGRFeature* feature;
-    while ((feature = getNextFeature ()))
+    while ((feature = getNextFeature()))
     {
-        OGRGeometry* geometry = feature->GetGeometryRef ();
+        OGRGeometry* geometry = feature->GetGeometryRef();
         geometry->transform (transformation);
         if (geometry->Intersects (targetGeometry))
         {
             OGRGeometry* intersection = geometry->Intersection (targetGeometry);
-            shapeArea += ((OGRPolygon*)intersection)->get_Area ();
+            shapeArea += ((OGRPolygon*)intersection)->get_Area();
             OGRGeometryFactory::destroyGeometry (intersection);
         }
 
@@ -76,6 +76,6 @@ const double ShapeFile::getAreaRatio (OGRGeometry* targetGeometry,
 
 void ShapeFile::setSpatialFilter (OGRGeometry* filter)
 {
-    _layer->SetSpatialFilter (filter);
+    layer_->SetSpatialFilter (filter);
 }
 

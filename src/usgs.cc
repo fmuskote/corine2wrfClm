@@ -3,11 +3,11 @@
 
 using namespace usgs;
 
-UsgsFractions::UsgsFractions ()
-    : NotClmFractions (typeCount)
+UsgsFractions::UsgsFractions()
+    : NotClmFractions (usgs::typeCount)
 {}
 
-clm::ClmFractions UsgsFractions::map2Clm () const
+clm::ClmFractions UsgsFractions::map2Clm() const
 {
     clm::ClmFractions clmFractions;
 

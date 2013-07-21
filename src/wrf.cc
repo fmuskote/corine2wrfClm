@@ -26,14 +26,14 @@ using std::uppercase;
 using namespace wrf;
 
 File::File (string fileName, FileMode fileMode)
-    : NcFile (fileName.c_str (), fileMode)
+    : NcFile (fileName.c_str(), fileMode)
 #ifdef _OPENMP
-      , _lock (new omp_lock_t)
+      , lock_ (new omp_lock_t)
 #endif
 {
 
-    _iSize = getDim ("west_east").getSize ();
-    _jSize = getDim ("south_north").getSize ();
+    iSize_ = getDim ("west_east").getSize();
+    jSize_ = getDim ("south_north").getSize();
 
     // create projection for this WRF file //
     //-------------------------------------//
@@ -52,59 +52,49 @@ File::File (string fileName, FileMode fileMode)
        << " +lat_2="    << truelat2
        << " +lat_0="    << cen_lat
        << " +lon_0="    << cen_lon
-       << " +x_0="      << (((double) iSize ())/2.0 * getDx ())
-       << " +y_0="      << (((double) jSize ())/2.0 * getDy ())
+       << " +x_0="      << static_cast<double> (iSize()) / 2.0 * getDx()
+       << " +y_0="      << static_cast<double> (jSize()) / 2.0 * getDy()
        << " +ellps=WGS84 +datum=WGS84";
-    _coordinateSystem->importFromProj4 (ss.str ().c_str ());
+    coordinateSystem_->importFromProj4 (ss.str().c_str());
 
     // get parameters for affine transformation //
     //------------------------------------------//
-    _padfTransform[0] = getDx ()/2.0;
-    _padfTransform[1] = getDx ();
-    _padfTransform[2] = 0.0;
-    _padfTransform[3] = getDy ()/2.0;
-    _padfTransform[4] = 0.0;
-    _padfTransform[5] = getDy ();
+    padfTransform_[0] = getDx()/2.0;
+    padfTransform_[1] = getDx();
+    padfTransform_[2] = 0.0;
+    padfTransform_[3] = getDy()/2.0;
+    padfTransform_[4] = 0.0;
+    padfTransform_[5] = getDy();
 
     // calculate parameters for inverse transformation //
     //-------------------------------------------------//
-    _padfTransformInverse[0] = -_padfTransform[0]/_padfTransform[1];
-    _padfTransformInverse[1] = 1.0/_padfTransform[1];
-    _padfTransformInverse[2] = 0.0;
-    _padfTransformInverse[3] = -_padfTransform[3]/_padfTransform[5];
-    _padfTransformInverse[4] = 0.0;
-    _padfTransformInverse[5] = 1.0/_padfTransform[5];
+    padfTransformInverse_[0] = -padfTransform_[0]/padfTransform_[1];
+    padfTransformInverse_[1] = 1.0/padfTransform_[1];
+    padfTransformInverse_[2] = 0.0;
+    padfTransformInverse_[3] = -padfTransform_[3]/padfTransform_[5];
+    padfTransformInverse_[4] = 0.0;
+    padfTransformInverse_[5] = 1.0/padfTransform_[5];
 
 #ifdef _OPENMP
-    omp_init_lock (_lock.get ());
+    omp_init_lock (lock_.get());
 #endif
 }
 
 File::~File ()
 {
 #ifdef _OPENMP
-    omp_destroy_lock (_lock.get ());
+    omp_destroy_lock (lock_.get ());
 #endif
 }
 
-inline size_t File::iSize () const
-{
-    return _iSize;
-}
-
-inline size_t File::jSize () const
-{
-    return _jSize;
-}
-
-double File::getDx () const
+double File::getDx() const
 {
     double result;
     getAtt ("DX").getValues (&result);
     return result;
 }
 
-double File::getDy () const
+double File::getDy() const
 {
     double result;
     getAtt ("DY").getValues (&result);
@@ -115,8 +105,8 @@ boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j)
 {
     // check indizes against domain size //
     //-----------------------------------//
-    if (i > iSize () or j > jSize ())
-        throw OutOfDomainException ();
+    if (i > iSize() or j > jSize())
+        throw OutOfDomainException();
 
     // allocate output temporary array //
     //---------------------------------//
@@ -140,31 +130,32 @@ boost::shared_ptr<NotClmFractions> File::getLandUseFraction (size_t i, size_t j)
     count.push_back (1);
 
 #ifdef _OPENMP
-    lock ();
+    lock();
 #endif
 
-    variable.getVar (offset, count, indexRate.get ());
+    variable.getVar (offset, count, indexRate.get());
 
 #ifdef _OPENMP
-    unlock ();
+    unlock();
 #endif
 
     // create resulting vector //
     //-------------------------//
     boost::shared_ptr<NotClmFractions> result;
-    if (isModisLUType ())     result = boost::shared_ptr<NotClmFractions> (new modis::ModisFractions);
-    else if (isUsgsLUType ()) result = boost::shared_ptr<NotClmFractions> (new usgs::UsgsFractions);
-    else throw std::exception ();
+    if (isModisLUType())     result = boost::shared_ptr<NotClmFractions> (new modis::ModisFractions);
+    else if (isUsgsLUType()) result = boost::shared_ptr<NotClmFractions> (new usgs::UsgsFractions);
+    else throw UnknownLUTypeException();
 
     // copy to result //
     //----------------//
-    for (size_t i = 0; i < landCatStag; i++)
+    for (size_t i = 0; i < landCatStag; ++i)
         result->set (i, indexRate[i]);
 
     return result;
 }
 
-void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions& fractions)
+void File::writeClmPftTypeFractions(
+        size_t i, size_t j, const clm::ClmFractions& fractions)
 {
     for (size_t type = 0; type < clm::typeCount - 1; type++)
     {
@@ -173,7 +164,7 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
         stream.fill ('0');
         stream.width (2);
         stream << type;
-        string varName = stream.str ();
+        string varName = stream.str();
 
         std::vector<size_t> offset;
         offset.push_back (0);
@@ -185,11 +176,11 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
         count.push_back (1);
 
 #ifdef _OPENMP
-        lock ();
+        lock();
 #endif
 
         netCDF::NcVar variable = getVar (varName);
-        if (variable.isNull ())
+        if (variable.isNull())
         {
             std::vector<netCDF::NcDim> dims;
             dims.push_back (getDim ("Time"));
@@ -210,13 +201,13 @@ void File::writeClmPftTypeFractions (size_t i, size_t j, const clm::ClmFractions
         variable.putVar (offset, count, &fractions[type]);
 
 #ifdef _OPENMP
-        unlock ();
+        unlock();
 #endif
 
     }
 }
 
-bool File::isModisLUType () const
+bool File::isModisLUType() const
 {
     std::string luType;
     getAtt ("MMINLU").getValues (luType);
@@ -227,8 +218,8 @@ bool File::isModisLUType () const
 
     bool result = false;
     if (    luType == "MODIFIED_IGBP_MODIS_NOAH"
-        and landCatDim.getSize () == modis::typeCount
-        and num_land_cat == (int) modis::typeCount)
+        and landCatDim.getSize() == modis::typeCount
+        and num_land_cat == static_cast<int> (modis::typeCount))
         result = true;
 
     return result;
@@ -246,7 +237,7 @@ bool File::isUsgsLUType () const
     bool result = false;
     if (    luType == "USGS"
         and landCatDim.getSize () == usgs::typeCount
-        and num_land_cat == (int) usgs::typeCount)
+        and num_land_cat == static_cast<int> (usgs::typeCount))
         result = true;
 
     return result;
@@ -266,34 +257,34 @@ boost::multi_array<float, 2> File::getClmType (size_t type)
     count.push_back (iSize ());
 
     boost::multi_array<float, 3> data = read<float, 3> ("clm_landuse_fraction", offset, count);
-    return data[boost::indices[0][boost::multi_array_types::index_range(0, jSize ())][boost::multi_array_types::index_range (0, iSize ())]];
+    return data[boost::indices[0][boost::multi_array_types::index_range(0, jSize())][boost::multi_array_types::index_range (0, iSize())]];
 }
 
 void File::createMosaic (File& highResFile)
 {
 
-    float dx = getDx ();
-    float dy = getDy ();
-    float dxHigh = highResFile.getDx ();
-    float dyHigh = highResFile.getDy ();
+    float dx = getDx();
+    float dy = getDy();
+    float dxHigh = highResFile.getDx();
+    float dyHigh = highResFile.getDy();
 
     if (fabs (fmod (dx, dxHigh)) > 0.0005 or fabs (fmod (dy, dyHigh)) > 0.0005)
         throw WrongMosaicGeometryException ();
 
-    size_t dxFac = (size_t)(dx/dxHigh + 0.5);
-    size_t dyFac = (size_t)(dy/dyHigh + 0.5);
+    size_t dxFac = static_cast<size_t> (dx / dxHigh + 0.5);
+    size_t dyFac = static_cast<size_t> (dy / dyHigh + 0.5);
 
     if (dxFac != dyFac)
-        throw WrongMosaicGeometryException ();
+        throw WrongMosaicGeometryException();
 
-    if (   iSize ()*dxFac != highResFile.iSize ()
-        or jSize ()*dyFac != highResFile.jSize ())
-        throw WrongMosaicGeometryException ();
+    if (   iSize() * dxFac != highResFile.iSize()
+        or jSize() * dyFac != highResFile.jSize())
+        throw WrongMosaicGeometryException();
 
-    size_t mosaicCellCount = dxFac*dyFac;
+    size_t mosaicCellCount = dxFac * dyFac;
 
-    if (getDim ("mosaic_cells").getSize () != mosaicCellCount)
-        throw WrongMosaicGeometryException ();
+    if (getDim ("mosaic_cells").getSize() != mosaicCellCount)
+        throw WrongMosaicGeometryException();
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -307,7 +298,7 @@ void File::createMosaic (File& highResFile)
         highResVarName << type;
 
         boost::multi_array<float, 2> highResData =
-            highResFile.read<float, 2> (highResVarName.str ());
+            highResFile.read<float, 2> (highResVarName.str());
 
         boost::multi_array<float, 3> data =
             mosaicArray (highResData, mosaicCellCount, dxFac, dyFac);
@@ -317,7 +308,7 @@ void File::createMosaic (File& highResFile)
         stream.fill ('0');
         stream.width (2);
         stream << type;
-        write (stream.str (), data);
+        write (stream.str(), data);
 
     }
 
@@ -343,14 +334,14 @@ void File::createMosaic (File& highResFile)
 }
 
 #ifdef _OPENMP
-void File::lock ()
+void File::lock()
 {
-    omp_set_lock (_lock.get ());
+    omp_set_lock (lock_.get());
 }
 
-void File::unlock ()
+void File::unlock()
 {
-    omp_unset_lock (_lock.get ());
+    omp_unset_lock (lock_.get());
 }
 #endif
 
@@ -386,10 +377,11 @@ void File::write0Dto2D (string varName, size_t i, size_t j, double value)
     count.push_back (1);
 
 #ifdef _OPENMP
-        lock ();
+    lock();
 #endif
+
     netCDF::NcVar variable = getVar (varName);
-    if (variable.isNull ())
+    if (variable.isNull())
     {
         std::vector<netCDF::NcDim> dims;
         dims.push_back (getDim ("Time"));
@@ -410,23 +402,23 @@ void File::write0Dto2D (string varName, size_t i, size_t j, double value)
     variable.putVar (offset, count, &value);
 
 #ifdef _OPENMP
-    unlock ();
+    unlock();
 #endif
 }
 
-boost::multi_array<float, 3> File::mosaicArray (
+boost::multi_array<float, 3> File::mosaicArray(
         const boost::multi_array<float, 2>& highResData,
         size_t mosaicCellCount, size_t dxFac, size_t dyFac) const
 {
 
-    boost::multi_array<float, 3> result (boost::extents[mosaicCellCount][jSize ()][iSize ()]);
+    boost::multi_array<float, 3> result (boost::extents[mosaicCellCount][jSize()][iSize()]);
 
-    for (size_t i = 0; i < iSize (); i++)
-        for (size_t j = 0; j < jSize (); j++)
+    for (size_t i = 0; i < iSize(); i++)
+        for (size_t j = 0; j < jSize(); j++)
             for (size_t im = 0; im < dxFac; im++)
                 for (size_t jm = 0; jm < dyFac; jm++) {
-                    size_t m = im*dyFac + jm;
-                    result[m][j][i] = highResData[j*dyFac + jm][i*dxFac + im];
+                    size_t m = im * dyFac + jm;
+                    result[m][j][i] = highResData[j * dyFac + jm][i * dxFac + im];
                 }
     return result;
 }

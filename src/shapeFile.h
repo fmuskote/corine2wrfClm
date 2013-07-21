@@ -7,16 +7,16 @@
 class ShapeFile
 {
   private:
-    OGRDataSource* _poDS;
-    OGRLayer* _layer;
-    OGRSpatialReference* _coordinateSystem;
+    OGRDataSource* poDS_;
+    OGRLayer* layer_;
+    OGRSpatialReference* coordinateSystem_;
   public:
     ShapeFile (std::string);
-    ~ShapeFile ();
-    const int getLayerCount () const;
-    const int getFeatureCount () const;
-    void resetFeatures ();
-    OGRFeature* getNextFeature ();
+    ~ShapeFile();
+    const int getLayerCount() const;
+    const int getFeatureCount() const;
+    void resetFeatures();
+    OGRFeature* getNextFeature();
     const double getAreaRatio (OGRGeometry*, OGRSpatialReference*);
     void setSpatialFilter (OGRGeometry*);
 };

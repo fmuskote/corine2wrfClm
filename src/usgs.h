@@ -40,8 +40,8 @@ namespace usgs
     class UsgsFractions : public NotClmFractions
     {
         public:
-            UsgsFractions ();
-            clm::ClmFractions map2Clm () const;
+            UsgsFractions();
+            clm::ClmFractions map2Clm() const;
     };
 }
 

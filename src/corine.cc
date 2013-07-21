@@ -5,11 +5,11 @@
 using namespace corine;
 using std::string;
 
-CorineFractions::CorineFractions ()
-    : NotClmFractions (typeCount)
+CorineFractions::CorineFractions()
+    : NotClmFractions (corine::typeCount)
 {}
 
-clm::ClmFractions CorineFractions::map2Clm () const
+clm::ClmFractions CorineFractions::map2Clm() const
 {
     clm::ClmFractions clmFractions;
 
@@ -161,7 +161,7 @@ string corine::getFileName (string path, size_t type)
     return result;
 }
 
-double CorineFractions::getArtificialFraction () const
+double CorineFractions::getArtificialFraction() const
 {
     double result = 0.0;
     result += operator[] (continuousUrbanFabric);
@@ -178,7 +178,7 @@ double CorineFractions::getArtificialFraction () const
     return result;
 }
 
-double CorineFractions::getWetlandFraction () const
+double CorineFractions::getWetlandFraction() const
 {
     double result = 0.0;
     result += operator[] (inlandMarshes);
@@ -189,7 +189,7 @@ double CorineFractions::getWetlandFraction () const
     return result;
 }
 
-double CorineFractions::getWaterFraction () const
+double CorineFractions::getWaterFraction() const
 {
     double result = 0.0;
     result += operator[] (waterCourses);
@@ -200,7 +200,7 @@ double CorineFractions::getWaterFraction () const
     return result;
 }
 
-double CorineFractions::getGlacierFraction () const
+double CorineFractions::getGlacierFraction() const
 {
     double result = 0.0;
     result += operator[] (claciersAndPerpetualSnow);

@@ -32,7 +32,7 @@ namespace clm
     class ClmFractions : public Fractions
     {
         public:
-            ClmFractions ();
+            ClmFractions();
     };
 
 }

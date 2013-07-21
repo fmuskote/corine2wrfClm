@@ -2,43 +2,43 @@
 
 Coordinate::Coordinate (double x, double y,
         OGRSpatialReference* coordinateSystem)
+    : x_ (x),
+      y_ (y)
 {
-    _x = x;
-    _y = y;
-    _coordinateSystem = coordinateSystem;
-    _coordinateSystem->Reference ();
+    coordinateSystem_ = coordinateSystem;
+    coordinateSystem_->Reference();
 }
 
-Coordinate::~Coordinate ()
+Coordinate::~Coordinate()
 {
-    //_coordinateSystem->Release ();
+    //coordinateSystem_->Release();
 }
 
-const double Coordinate::getX () const
+const double Coordinate::getX() const
 {
-    return _x;
+    return x_;
 }
 
-const double Coordinate::getY () const
+const double Coordinate::getY() const
 {
-    return _y;
+    return y_;
 }
 
-OGRSpatialReference* Coordinate::getCoordinateSystem () const
+OGRSpatialReference* Coordinate::getCoordinateSystem() const
 {
-    return _coordinateSystem;
+    return coordinateSystem_;
 }
 
 const Coordinate Coordinate::transform (OGRSpatialReference* targetCoordinateSystem) const
 {
-    if (getCoordinateSystem ()->IsSame (targetCoordinateSystem))
+    if (getCoordinateSystem()->IsSame(targetCoordinateSystem))
         return *this;
     else
     {
         OGRCoordinateTransformation* trafo =
-            OGRCreateCoordinateTransformation (_coordinateSystem, targetCoordinateSystem);
-        double xNew = getX ();
-        double yNew = getY ();
+            OGRCreateCoordinateTransformation (coordinateSystem_, targetCoordinateSystem);
+        double xNew (getX());
+        double yNew (getY());
         trafo->Transform (1, &xNew, &yNew);
         OGRCoordinateTransformation::DestroyCT (trafo);
         Coordinate result(xNew, yNew, targetCoordinateSystem);
@@ -48,7 +48,7 @@ const Coordinate Coordinate::transform (OGRSpatialReference* targetCoordinateSys
 
 ostream& operator<< (ostream& out, const Coordinate& coord)
 {
-    out << coord.getX () << " " << coord.getY ();
+    out << coord.getX() << " " << coord.getY();
     return out;
 }
 

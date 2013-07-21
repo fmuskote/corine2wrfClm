@@ -12,15 +12,15 @@ using std::ostream;
 class Coordinate
 {
   private:
-    double _x;
-    double _y;
-    OGRSpatialReference* _coordinateSystem;
+    double x_;
+    double y_;
+    OGRSpatialReference* coordinateSystem_;
   public:
     Coordinate (double, double, OGRSpatialReference*);
-    ~Coordinate ();
-    const double getX () const;
-    const double getY () const;
-    OGRSpatialReference* getCoordinateSystem () const;
+    ~Coordinate();
+    const double getX() const;
+    const double getY() const;
+    OGRSpatialReference* getCoordinateSystem() const;
     const Coordinate transform (OGRSpatialReference*) const;
     friend ostream& operator<< (ostream&, const Coordinate&);
 };

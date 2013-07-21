@@ -1,7 +1,7 @@
 #include "clm.h"
 using namespace clm;
 
-ClmFractions::ClmFractions ()
-    : Fractions (typeCount)
+ClmFractions::ClmFractions()
+    : Fractions (clm::typeCount)
 {}
 

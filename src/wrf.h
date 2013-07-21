@@ -31,11 +31,11 @@ namespace wrf
     class File : public netCDF::NcFile, public GeoRaster
     {
       private:
-        size_t _iSize;
-        size_t _jSize;
+        size_t iSize_;
+        size_t jSize_;
 
 #ifdef _OPENMP
-        boost::scoped_ptr<omp_lock_t> _lock;
+        boost::scoped_ptr<omp_lock_t> lock_;
 #endif
 
         double getDx () const;
@@ -48,18 +48,18 @@ namespace wrf
 
       public:
         File (std::string, FileMode = netCDF::NcFile::read);
-        ~File ();
-        size_t iSize () const;
-        size_t jSize () const;
+        ~File();
+        inline size_t iSize() const {return iSize_;}
+        inline size_t jSize() const {return jSize_;}
         boost::shared_ptr<NotClmFractions> getLandUseFraction (size_t, size_t);
         void writeClmPftTypeFractions (size_t, size_t, const clm::ClmFractions&);
-        bool isModisLUType () const;
-        bool isUsgsLUType () const;
+        bool isModisLUType() const;
+        bool isUsgsLUType() const;
         boost::multi_array<float, 2> getClmType (size_t);
         void createMosaic (wrf::File&);
 #ifdef _OPENMP
-        void lock ();
-        void unlock ();
+        void lock();
+        void unlock();
 #endif
         void writeWaterFraction (size_t, size_t, double);
         void writeUrbanFraction (size_t, size_t, double);
@@ -67,11 +67,11 @@ namespace wrf
         void writeWetlandFraction (size_t, size_t, double);
 
         template<typename T, size_t D>
-        void write (
+        void write(
                 std::string varName,
                 const boost::multi_array<T, D>& data);
         template<typename T, size_t D>
-        void write (
+        void write(
                 std::string varName,
                 const boost::multi_array<T, D>& data,
                 const std::vector<size_t>& offset,
@@ -79,7 +79,7 @@ namespace wrf
         template<typename T, size_t D>
         boost::multi_array<T, D> read (std::string varName);
         template<typename T, size_t D>
-        boost::multi_array<T, D> read (
+        boost::multi_array<T, D> read(
                 std::string varName,
                 const std::vector<size_t>& offset,
                 const std::vector<size_t>& count);
@@ -87,25 +87,25 @@ namespace wrf
     };
 
     template<typename T, size_t D>
-    void File::write (
+    void File::write(
             std::string varName,
             const boost::multi_array<T, D>& data)
     {
         netCDF::NcVar variable = getVar (varName);
 
 #ifdef _OPENMP
-        lock ();
+        lock();
 #endif
 
-        variable.putVar (data.data ());
+        variable.putVar (data.data());
 
 #ifdef _OPENMP
-        unlock ();
+        unlock();
 #endif
     }
 
     template<typename T, size_t D>
-    void File::write (
+    void File::write(
             std::string varName,
             const boost::multi_array<T, D>& data,
             const std::vector<size_t>& offset,
@@ -114,13 +114,13 @@ namespace wrf
         netCDF::NcVar variable = getVar (varName);
 
 #ifdef _OPENMP
-        lock ();
+        lock();
 #endif
 
-        variable.putVar (offset, count, data.data ());
+        variable.putVar (offset, count, data.data());
 
 #ifdef _OPENMP
-        unlock ();
+        unlock();
 #endif
     }
 
@@ -129,36 +129,36 @@ namespace wrf
     {
         netCDF::NcVar variable = getVar (varName);
 
-        std::vector<netCDF::NcDim> dimensions = variable.getDims ();
-        if (dimensions.size () != D) throw VariableNotExistException ();
+        std::vector<netCDF::NcDim> dimensions = variable.getDims();
+        if (dimensions.size () != D) throw VariableNotExistException();
 
         boost::array<long, D> dimensionSizes;
         for (size_t i = 0; i < D; ++i)
-            dimensionSizes[i] = dimensions[i].getSize ();
+            dimensionSizes[i] = dimensions[i].getSize();
 
         boost::multi_array<T, D> data (dimensionSizes);
 
 #ifdef _OPENMP
-        lock ();
+        lock();
 #endif
 
-        variable.getVar (data.data ());
+        variable.getVar (data.data());
 
 #ifdef _OPENMP
-        unlock ();
+        unlock();
 #endif
         return data;
 
     }
 
     template<typename T, size_t D>
-    boost::multi_array<T, D> File::read (
+    boost::multi_array<T, D> File::read(
             std::string varName,
             const std::vector<size_t>& offset,
             const std::vector<size_t>& count)
     {
         netCDF::NcVar variable = getVar (varName);
-        if (variable.getDims ().size () != D) throw VariableNotExistException ();
+        if (variable.getDims().size() != D) throw VariableNotExistException();
 
         boost::array<long, D> dimensionSizes;
         for (size_t i = 0; i < D; ++i)
@@ -167,13 +167,13 @@ namespace wrf
         boost::multi_array<T, D> data (dimensionSizes);
 
 #ifdef _OPENMP
-        lock ();
+        lock();
 #endif
 
-        variable.getVar (offset, count, data.data ());
+        variable.getVar (offset, count, data.data());
 
 #ifdef _OPENMP
-        unlock ();
+        unlock();
 #endif
 
         return data;

@@ -14,19 +14,19 @@ class GeoRaster
     void inverseAffineTransformation (double, double, double&, double&) const;
 
   protected:
-    double               _padfTransform[6];
-    double               _padfTransformInverse[6];
-    OGRSpatialReference* _coordinateSystem;
+    double               padfTransform_[6];
+    double               padfTransformInverse_[6];
+    OGRSpatialReference* coordinateSystem_;
 
   public:
-    GeoRaster ();
-    ~GeoRaster ();
-    virtual size_t iSize () const = 0;
-    virtual size_t jSize () const = 0;
+    GeoRaster();
+    ~GeoRaster();
+    virtual size_t iSize() const = 0;
+    virtual size_t jSize() const = 0;
     Coordinate getCoordinate (double, double) const;
     OGRGeometry* getPolygon (size_t, size_t) const;
-    OGRGeometry* getCompleteExtend () const;
-    OGRSpatialReference* getCoordinateSystem () const;
+    OGRGeometry* getCompleteExtend() const;
+    OGRSpatialReference* getCoordinateSystem() const;
     void getArrayIndex (const Coordinate, double&, double&) const;
     void writeEmptyGeoTiff (std::string);
     virtual boost::multi_array<float, 2> getClmType (size_t) = 0;

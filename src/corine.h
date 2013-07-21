@@ -61,12 +61,12 @@ namespace corine
     class CorineFractions : public NotClmFractions
     {
         public:
-            CorineFractions ();
-            clm::ClmFractions map2Clm () const;
-            double getArtificialFraction () const;
-            double getWetlandFraction () const;
-            double getWaterFraction () const;
-            double getGlacierFraction () const;
+            CorineFractions();
+            clm::ClmFractions map2Clm() const;
+            double getArtificialFraction() const;
+            double getWetlandFraction() const;
+            double getWaterFraction() const;
+            double getGlacierFraction() const;
     };
 
     std::string getFileName (std::string, size_t);

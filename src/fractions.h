@@ -11,9 +11,10 @@
 class Fractions
 {
     private:
-        boost::scoped_array<double> _data;
+        boost::scoped_array<double> data_;
+        size_t                      typeCount_;
     protected:
-        size_t                      _typeCount;
+        inline const size_t& typeCount() const {return typeCount_;}
     public:
 
         /**
@@ -33,7 +34,7 @@ class Fractions
         /**
          * @brief 
          */
-        void check () const;
+        void check() const;
 
         /**
          * @brief 
@@ -65,7 +66,7 @@ class Fractions
          *
          * @return 
          */
-        double missing () const;
+        double missing() const;
 
         /**
          * @brief 

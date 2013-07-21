@@ -37,10 +37,10 @@ namespace modis
     class ModisFractions : public NotClmFractions
     {
         private:
-            usgs::UsgsFractions map2Usgs () const;
+            usgs::UsgsFractions map2Usgs() const;
         public:
-            ModisFractions ();
-            clm::ClmFractions map2Clm () const;
+            ModisFractions();
+            clm::ClmFractions map2Clm() const;
     };
 
 }

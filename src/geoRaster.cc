@@ -4,34 +4,34 @@
 
 using namespace std;
 
-GeoRaster::GeoRaster ()
+GeoRaster::GeoRaster()
 {
-    _coordinateSystem = new OGRSpatialReference ();
+    coordinateSystem_ = new OGRSpatialReference ();
 }
 
-GeoRaster::~GeoRaster ()
+GeoRaster::~GeoRaster()
 {
-    _coordinateSystem->Release ();
+    coordinateSystem_->Release ();
 }
     
 Coordinate GeoRaster::getCoordinate (double i, double j) const
 {
     double x, y;
     affineTransformation (i, j, x, y);
-    Coordinate result (x, y, _coordinateSystem);
+    Coordinate result (x, y, coordinateSystem_);
     return result;
 }
 
 void GeoRaster::affineTransformation (double i, double j, double& x, double& y) const
 {
-    x = _padfTransform[0] + i*_padfTransform[1] + j*_padfTransform[2];
-    y = _padfTransform[3] + i*_padfTransform[4] + j*_padfTransform[5];
+    x = padfTransform_[0] + i*padfTransform_[1] + j*padfTransform_[2];
+    y = padfTransform_[3] + i*padfTransform_[4] + j*padfTransform_[5];
 }
 
 void GeoRaster::inverseAffineTransformation (double x, double y, double& i, double& j) const
 {
-    i = _padfTransformInverse[0] + x*_padfTransformInverse[1] + y*_padfTransformInverse[2];
-    j = _padfTransformInverse[3] + x*_padfTransformInverse[4] + y*_padfTransformInverse[5];
+    i = padfTransformInverse_[0] + x*padfTransformInverse_[1] + y*padfTransformInverse_[2];
+    j = padfTransformInverse_[3] + x*padfTransformInverse_[4] + y*padfTransformInverse_[5];
 }
 
 OGRGeometry* GeoRaster::getPolygon (size_t i, size_t j) const
@@ -58,66 +58,68 @@ OGRGeometry* GeoRaster::getPolygon (size_t i, size_t j) const
     return (OGRGeometry*)result;
 }
 
-OGRGeometry* GeoRaster::getCompleteExtend () const
+OGRGeometry* GeoRaster::getCompleteExtend() const
 {
-    OGRPolygon* result = new OGRPolygon ();
-    result->assignSpatialReference (getCoordinateSystem ());
+    OGRPolygon* result = new OGRPolygon();
+    result->assignSpatialReference (getCoordinateSystem());
 
-    OGRLinearRing* ring = new OGRLinearRing ();
+    OGRLinearRing* ring = new OGRLinearRing();
     double x, y;
     affineTransformation (-0.5, -0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)iSize () + 0.5, -0.5, x, y);
+    affineTransformation (static_cast<double> (iSize()) + 0.5, -0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation ((double)iSize () + 0.5, (double)jSize () + 0.5, x, y);
+    affineTransformation (static_cast<double> (iSize()) + 0.5, static_cast<double> (jSize()) + 0.5, x, y);
     ring->addPoint (x, y);
-    affineTransformation (-0.5, (double)jSize () + 0.5, x, y);
+    affineTransformation (-0.5, static_cast<double> (jSize()) + 0.5, x, y);
     ring->addPoint (x, y);
 
-    ring->closeRings ();
+    ring->closeRings();
     result->addRingDirectly (ring);
     return (OGRGeometry*)result;
 }
 
-OGRSpatialReference* GeoRaster::getCoordinateSystem () const
+OGRSpatialReference* GeoRaster::getCoordinateSystem() const
 {
-    return _coordinateSystem;
+    return coordinateSystem_;
 }
 
 void GeoRaster::getArrayIndex (const Coordinate coord, double& i, double& j) const
 {
-    Coordinate coordInMySystem = coord.transform (getCoordinateSystem ());
-    inverseAffineTransformation (coordInMySystem.getX (),
-	    coordInMySystem.getY (), i, j);
+    Coordinate coordInMySystem = coord.transform (getCoordinateSystem());
+    inverseAffineTransformation(
+            coordInMySystem.getX(),
+	    coordInMySystem.getY(),
+            i, j);
 }
 
 void GeoRaster::writeEmptyGeoTiff (string fileName)
 {
-    GDALAllRegister ();
+    GDALAllRegister();
 
     GDALDriver* driver;
-    if (!(driver = GetGDALDriverManager ()->GetDriverByName ("GTiff")))
-        throw GDALDriverNotFoundException ();
+    if (!(driver = GetGDALDriverManager()->GetDriverByName ("GTiff")))
+        throw GDALDriverNotFoundException();
 
     GDALDataset* dataSet;
     char** options = NULL;
-    dataSet = driver->Create (fileName.c_str (), iSize (), jSize (), clm::typeCount,
+    dataSet = driver->Create (fileName.c_str(), iSize(), jSize(), clm::typeCount,
             GDT_Float32, options);
 
-    dataSet->SetGeoTransform (_padfTransform);
+    dataSet->SetGeoTransform (padfTransform_);
 
     char *pszSRS_WKT = NULL;
-    _coordinateSystem->exportToWkt( &pszSRS_WKT );
-    dataSet->SetProjection( pszSRS_WKT );
-    CPLFree( pszSRS_WKT );
+    coordinateSystem_->exportToWkt (&pszSRS_WKT);
+    dataSet->SetProjection (pszSRS_WKT);
+    CPLFree (pszSRS_WKT);
 
     for (size_t type = 0; type < clm::typeCount; type++)
     {
         boost::multi_array<float, 2> data = getClmType (type);
 
         GDALRasterBand* band = dataSet->GetRasterBand(type+1);
-        band->RasterIO (GF_Write, 0, 0, iSize (), jSize (),
-                          data.data (), iSize (), jSize (), GDT_Float32, 0, 0);
+        band->RasterIO (GF_Write, 0, 0, iSize(), jSize(),
+                          data.data(),  iSize(), jSize(), GDT_Float32, 0, 0);
     }
 
     GDALClose ((GDALDatasetH)dataSet);
