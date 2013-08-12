@@ -104,6 +104,9 @@ void doTheWork (string corineFileDirectory, string wrfFileName)
 
         boost::shared_ptr<boost::multi_array<corine::CorineFractions, 2> >
             fractions = generateCorineFromShapefiles (wrfFile, corineFileDirectory);
+//        boost::shared_ptr<boost::multi_array<corine::CorineFractions, 2> >
+//            fractions (new boost::multi_array<corine::CorineFractions, 2>(
+//                        boost::extents[wrfFile.iSize()][wrfFile.jSize()]));
 
 #ifdef _OPENMP
         boost::scoped_ptr<omp_lock_t> lock (new omp_lock_t);
@@ -112,8 +115,8 @@ void doTheWork (string corineFileDirectory, string wrfFileName)
 
 #ifndef NOOUTPUT
 #ifdef DEBUG3
-        for (size_t i = 11; i < 12; ++i)
-            for (size_t j = 15; j < 16; ++j)
+        for (size_t i = 0; i < 1; ++i)
+            for (size_t j = 0; j < 1; ++j)
 #else
 #ifdef _OPENMP
 #pragma omp parallel for

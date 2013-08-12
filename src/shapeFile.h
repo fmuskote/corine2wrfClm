@@ -12,7 +12,7 @@ class ShapeFile
     OGRSpatialReference* coordinateSystem_;
   public:
     ShapeFile (std::string);
-    ~ShapeFile();
+    virtual ~ShapeFile();
     const int getLayerCount() const;
     const int getFeatureCount() const;
     void resetFeatures();

@@ -17,12 +17,13 @@ class Coordinate
     OGRSpatialReference* coordinateSystem_;
   public:
     Coordinate (double, double, OGRSpatialReference*);
-    ~Coordinate();
+    virtual ~Coordinate();
     const double getX() const;
     const double getY() const;
     OGRSpatialReference* getCoordinateSystem() const;
     const Coordinate transform (OGRSpatialReference*) const;
-    friend ostream& operator<< (ostream&, const Coordinate&);
 };
+
+ostream& operator<< (ostream&, const Coordinate&);
 
 #endif

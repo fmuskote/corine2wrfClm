@@ -80,21 +80,22 @@ File::File (string fileName, FileMode fileMode)
 #endif
 }
 
-File::~File ()
+File::~File()
 {
+    // coordinateSystem_->Release();
 #ifdef _OPENMP
     omp_destroy_lock (lock_.get ());
 #endif
 }
 
-double File::getDx() const
+const double File::getDx() const
 {
     double result;
     getAtt ("DX").getValues (&result);
     return result;
 }
 
-double File::getDy() const
+const double File::getDy() const
 {
     double result;
     getAtt ("DY").getValues (&result);
@@ -207,7 +208,7 @@ void File::writeClmPftTypeFractions(
     }
 }
 
-bool File::isModisLUType() const
+const bool File::isModisLUType() const
 {
     std::string luType;
     getAtt ("MMINLU").getValues (luType);
@@ -225,7 +226,7 @@ bool File::isModisLUType() const
     return result;
 }
 
-bool File::isUsgsLUType () const
+const bool File::isUsgsLUType () const
 {
     std::string luType;
     getAtt ("MMINLU").getValues (luType);

@@ -11,7 +11,7 @@ Coordinate::Coordinate (double x, double y,
 
 Coordinate::~Coordinate()
 {
-    //coordinateSystem_->Release();
+    // coordinateSystem_->Release();
 }
 
 const double Coordinate::getX() const

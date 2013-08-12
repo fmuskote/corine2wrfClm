@@ -14,7 +14,7 @@ GeoRaster::~GeoRaster()
     coordinateSystem_->Release ();
 }
     
-Coordinate GeoRaster::getCoordinate (double i, double j) const
+const Coordinate GeoRaster::getCoordinate (double i, double j) const
 {
     double x, y;
     affineTransformation (i, j, x, y);

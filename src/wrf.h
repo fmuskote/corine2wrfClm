@@ -38,8 +38,8 @@ namespace wrf
         boost::scoped_ptr<omp_lock_t> lock_;
 #endif
 
-        double getDx () const;
-        double getDy () const;
+        const double getDx () const;
+        const double getDy () const;
         void write0Dto2D (std::string, size_t, size_t, double);
 
         boost::multi_array<float, 3> mosaicArray (
@@ -48,13 +48,13 @@ namespace wrf
 
       public:
         File (std::string, FileMode = netCDF::NcFile::read);
-        ~File();
-        inline size_t iSize() const {return iSize_;}
-        inline size_t jSize() const {return jSize_;}
+        virtual ~File();
+        inline const size_t iSize() const {return iSize_;}
+        inline const size_t jSize() const {return jSize_;}
         boost::shared_ptr<NotClmFractions> getLandUseFraction (size_t, size_t);
         void writeClmPftTypeFractions (size_t, size_t, const clm::ClmFractions&);
-        bool isModisLUType() const;
-        bool isUsgsLUType() const;
+        const bool isModisLUType() const;
+        const bool isUsgsLUType() const;
         boost::multi_array<float, 2> getClmType (size_t);
         void createMosaic (wrf::File&);
 #ifdef _OPENMP

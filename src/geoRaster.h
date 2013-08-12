@@ -20,10 +20,10 @@ class GeoRaster
 
   public:
     GeoRaster();
-    ~GeoRaster();
-    virtual size_t iSize() const = 0;
-    virtual size_t jSize() const = 0;
-    Coordinate getCoordinate (double, double) const;
+    virtual ~GeoRaster();
+    virtual const size_t iSize() const = 0;
+    virtual const size_t jSize() const = 0;
+    const Coordinate getCoordinate (double, double) const;
     OGRGeometry* getPolygon (size_t, size_t) const;
     OGRGeometry* getCompleteExtend() const;
     OGRSpatialReference* getCoordinateSystem() const;
